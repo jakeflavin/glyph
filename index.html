@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Glyph — QR codes that do not expire</title>
+    <meta
+      name="description"
+      content="Make a QR code for a link, some text, a wifi network or a contact card. Download it as SVG or PNG. Made in the browser, with no account and nothing to pay."
+    />
+
+    <!-- Link previews. The image is the app's own cover shot, served from the directory
+         that hosts it; crawlers need an absolute URL and will not follow a relative one. -->
+    <meta property="og:title" content="Glyph — QR codes that do not expire" />
+    <meta
+      property="og:description"
+      content="Make a QR code for a link, some text, a wifi network or a contact card. Download it as SVG or PNG. Made in the browser, with no account and nothing to pay."
+    />
+    <meta property="og:site_name" content="Jake's Portfolio" />
+    <meta property="og:image" content="https://portfolio-4b9fe.web.app/images/glyph-cover.jpg" />
+    <meta property="og:image:alt" content="Glyph — QR codes that do not expire" />
+    <meta property="og:url" content="https://portfolio-4b9fe.web.app/glyph/" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Glyph — QR codes that do not expire" />
+    <meta
+      name="twitter:description"
+      content="Make a QR code for a link, some text, a wifi network or a contact card. Download it as SVG or PNG. Made in the browser, with no account and nothing to pay."
+    />
+    <meta name="twitter:image" content="https://portfolio-4b9fe.web.app/images/glyph-cover.jpg" />
+    <meta name="twitter:image:alt" content="Glyph — QR codes that do not expire" />
+    <link rel="canonical" href="https://portfolio-4b9fe.web.app/glyph/" />
+
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#ffffff" />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/icon-180.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Glyph" />
+
+    <!--
+      Resolves the theme before the first paint. The app switches tokens on
+      <html data-theme>, but React only sets it on mount — so without this the page paints
+      the light palette first, which is a white flash on a dark screen.
+    -->
+    <script>
+      try {
+        var stored = JSON.parse(localStorage.getItem('glyph.theme'))
+        var dark = window.matchMedia('(prefers-color-scheme: dark)').matches
+        document.documentElement.dataset.theme =
+          stored === 'light' || stored === 'dark' ? stored : dark ? 'dark' : 'light'
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

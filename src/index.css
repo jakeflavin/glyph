@@ -1,0 +1,134 @@
+/*
+ * Glyph — black and white, and nothing else.
+ *
+ * A QR code is two colours by definition, so the app is too. There is no accent hue: the
+ * interactive colour is the text colour, and a selected control inverts rather than tints.
+ * That keeps every state legible in both themes without a contrast check per hue, and it
+ * means the page never competes with the thing it is drawing.
+ *
+ * The token names are the ones shared across the set — --bg, --surface, --text, --dim,
+ * --line — so moving between these apps costs nothing.
+ */
+
+:root {
+  --font-sans:
+    ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Ubuntu, 'Helvetica Neue',
+    Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+
+  --font-body: 15px;
+  --font-small: 13px;
+  --font-tiny: 12px;
+
+  --bg: #ffffff;
+  --surface: #fafafa;
+  --surface-hi: #f0f0f0;
+  --line: #e2e2e2;
+  --line-strong: #111111;
+  --text: #111111;
+  --dim: #666666;
+  --ink: #ffffff; /* text on top of --text, wherever a control inverts */
+  --danger: #b3261e;
+
+  --radius: 6px;
+
+  /* The paper the code is drawn on. It stays white in both themes, because a scanner
+     reads contrast and a dark ground is the one thing that stops some of them. */
+  --paper: #ffffff;
+  --paper-line: #e2e2e2;
+
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --bg: #0d0d0d;
+  --surface: #151515;
+  --surface-hi: #202020;
+  --line: #2a2a2a;
+  --line-strong: #f2f2f2;
+  --text: #f2f2f2;
+  --dim: #9b9b9b;
+  --ink: #0d0d0d;
+  --danger: #ff8a80;
+
+  --paper: #ffffff;
+  --paper-line: #2a2a2a;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: var(--font-body);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 600;
+  margin: 0;
+}
+
+:focus-visible {
+  outline: 2px solid var(--line-strong);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+::selection {
+  background: var(--text);
+  color: var(--ink);
+}
+
+/*
+ * Print.
+ *
+ * A code gets printed on a poster, a table tent or a handout, so the page has to give up
+ * everything but the symbol. The chrome hides itself in the components that own it; what
+ * belongs here is the ground: white paper, and modules that survive a printer driver
+ * deciding to be helpful about backgrounds.
+ */
+@page {
+  margin: 12mm;
+}
+
+@media print {
+  body {
+    background: #ffffff;
+    color: #000000;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

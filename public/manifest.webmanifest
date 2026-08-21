@@ -1,0 +1,15 @@
+{
+  "name": "Glyph",
+  "short_name": "Glyph",
+  "description": "Make a QR code for a link, some text, a wifi network or a contact card. Download it as SVG or PNG. No account, and nothing to pay.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
