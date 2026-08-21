@@ -9,7 +9,7 @@ import type { KindId } from './payloads'
 export interface FieldSpec {
   name: string
   label: string
-  type: 'text' | 'textarea' | 'select' | 'checkbox'
+  type: 'text' | 'textarea' | 'select' | 'checkbox' | 'datetime'
   placeholder?: string
   inputMode?: 'text' | 'url' | 'email' | 'tel'
   autoComplete?: string
@@ -102,5 +102,42 @@ export const FIELDS: Record<KindId, [FieldSpec, ...FieldSpec[]]> = {
       inputMode: 'tel',
       wide: true,
     },
+  ],
+  whatsapp: [
+    {
+      name: 'number',
+      label: 'Number with country code',
+      type: 'text',
+      placeholder: '+1 555 0100',
+      inputMode: 'tel',
+      wide: true,
+    },
+    { name: 'message', label: 'Message to start with', type: 'textarea', wide: true },
+  ],
+  event: [
+    { name: 'title', label: 'Event', type: 'text', placeholder: 'Summer fete', wide: true },
+    { name: 'location', label: 'Where', type: 'text', wide: true },
+    { name: 'start', label: 'Starts', type: 'datetime' },
+    { name: 'end', label: 'Ends', type: 'datetime' },
+    { name: 'notes', label: 'Notes', type: 'textarea', wide: true },
+  ],
+  location: [
+    { name: 'latitude', label: 'Latitude', type: 'text', placeholder: '51.5007' },
+    { name: 'longitude', label: 'Longitude', type: 'text', placeholder: '-0.1246' },
+    { name: 'label', label: 'Name of the place', type: 'text', wide: true },
+  ],
+  crypto: [
+    {
+      name: 'coin',
+      label: 'Coin',
+      type: 'select',
+      options: [
+        { value: 'bitcoin', label: 'Bitcoin' },
+        { value: 'ethereum', label: 'Ethereum' },
+        { value: 'litecoin', label: 'Litecoin' },
+      ],
+    },
+    { name: 'amount', label: 'Amount, if any', type: 'text', inputMode: 'text' },
+    { name: 'address', label: 'Address', type: 'text', wide: true },
   ],
 }

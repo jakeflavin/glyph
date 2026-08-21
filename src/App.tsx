@@ -6,14 +6,20 @@ import { Card } from './components/Card'
 import { ColourControls } from './components/ColourControls'
 import { ShapeControls } from './components/ShapeControls'
 import { LogoControls } from './components/LogoControls'
+import { FrameControls } from './components/FrameControls'
 import { ScanControls } from './components/ScanControls'
 import { Preview } from './components/Preview'
+import { BulkCard } from './components/BulkCard'
+import { TemplateCard } from './components/TemplateCard'
 import { History } from './components/History'
 import { ConfirmDialog } from './components/ConfirmDialog'
 import { Columns, Controls, Foot, Page } from './App.styled'
 import { usePersistentState } from './hooks/usePersistentState'
 import { useTheme } from './hooks/useTheme'
 import { buildMatrix, type Ecc } from './lib/matrix'
+import { planDrawing } from './lib/render'
+import { toCanvas } from './lib/emit-raster'
+import { scanCheck, scanCheckSupported, type ScanResult } from './lib/scanCheck'
 import { DEFAULT_STYLE, readDraft, readStyle } from './lib/settings'
 import {
   EMPTY_DRAFT,
@@ -25,20 +31,19 @@ import {
   type KindId,
 } from './lib/payloads'
 import { addEntry, removeEntry, type HistoryEntry } from './lib/history'
+import { removeTemplate, type Template } from './lib/templates'
 
 export function App() {
   const { theme, setTheme } = useTheme()
   const [kind, setKind] = usePersistentState<KindId>('glyph.kind', 'link')
-  const [draft, setDraft] = usePersistentState('glyph.draft', EMPTY_DRAFT, {
-    read: readDraft,
-  })
+  const [draft, setDraft] = usePersistentState('glyph.draft', EMPTY_DRAFT, { read: readDraft })
   const [ecc, setEcc] = usePersistentState<Ecc>('glyph.ecc', 'M')
-  const [style, setStyle] = usePersistentState('glyph.style', DEFAULT_STYLE, {
-    read: readStyle,
-  })
+  const [style, setStyle] = usePersistentState('glyph.style', DEFAULT_STYLE, { read: readStyle })
   const [history, setHistory] = usePersistentState<HistoryEntry[]>('glyph.history', [])
+  const [templates, setTemplates] = usePersistentState<Template[]>('glyph.templates', [])
   const [clearing, setClearing] = useState(false)
   const [now, setNow] = useState(() => Date.now())
+  const [checked, setChecked] = useState<{ inputs: object; result: ScanResult } | null>(null)
 
   // Nothing publishes the passing of a minute, so the only way to keep "3 minutes ago"
   // honest is to ask. A minute is the smallest unit the list shows.
@@ -52,6 +57,40 @@ export function App() {
   // Encoding runs the whole Reed-Solomon pass, and this component re-renders for reasons
   // that have nothing to do with the content — a cleared confirmation, a ticking clock.
   const { matrix, error } = useMemo(() => buildMatrix(payload, ecc), [payload, ecc])
+
+  /*
+   * Read the code back, and say whether it worked.
+   *
+   * The result belongs to the inputs that produced it, so "still checking" is derived by
+   * comparing what was checked against what is on screen rather than by a second piece of
+   * state — which would have to be set from inside the effect, one render too late.
+   */
+  const inputs = useMemo(() => ({ matrix, style, payload }), [matrix, style, payload])
+  const supported = useMemo(() => scanCheckSupported(), [])
+  const checking = supported && matrix !== null && checked?.inputs !== inputs
+
+  useEffect(() => {
+    if (!inputs.matrix || !supported) return
+    let live = true
+
+    // Drawing and decoding costs a few milliseconds and every keystroke changes the code,
+    // so it waits for a pause; a run overtaken by the next one throws its answer away.
+    const timer = setTimeout(() => {
+      const drawing = planDrawing(inputs.matrix as NonNullable<typeof inputs.matrix>, inputs.style)
+      void scanCheck((pixels) => toCanvas(drawing, pixels), inputs.payload)
+        .then((result) => {
+          if (live) setChecked({ inputs, result })
+        })
+        .catch(() => {
+          /* A reader that throws is a reader that is not there. */
+        })
+    }, 400)
+
+    return () => {
+      live = false
+      clearTimeout(timer)
+    }
+  }, [inputs, supported])
 
   const label = summarize(kind, draft)
 
@@ -122,18 +161,34 @@ export function App() {
             <ShapeControls style={style} onStyle={setStyle} />
           </Card>
 
-          <Card title="Logo and caption">
-            <LogoControls
-              style={style}
-              correctionIsHighest={ecc === 'H'}
-              onStyle={setStyle}
-              onCaption={(caption) => setStyle((current) => ({ ...current, caption }))}
-            />
+          <Card title="Logo">
+            <LogoControls style={style} correctionIsHighest={ecc === 'H'} onStyle={setStyle} />
+          </Card>
+
+          <Card title="Frame and caption">
+            <FrameControls style={style} onStyle={setStyle} />
           </Card>
 
           <Card title="Scanning">
-            <ScanControls ecc={ecc} style={style} onEcc={setEcc} onStyle={setStyle} />
+            <ScanControls
+              ecc={ecc}
+              style={style}
+              check={supported ? (checked?.result ?? null) : 'unsupported'}
+              checking={checking}
+              onEcc={setEcc}
+              onStyle={setStyle}
+            />
           </Card>
+
+          <TemplateCard
+            templates={templates}
+            style={style}
+            onSave={setTemplates}
+            onApply={setStyle}
+            onRemove={(id) => setTemplates((entries) => removeTemplate(entries, id))}
+          />
+
+          <BulkCard style={style} ecc={ecc} />
 
           <History
             entries={history}

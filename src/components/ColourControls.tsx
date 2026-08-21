@@ -1,9 +1,14 @@
 import type { Dispatch, SetStateAction } from 'react'
 import { ArrowLeftRight } from 'lucide-react'
 import { PALETTES } from '@/lib/colors'
+import { solid, toCss, type Paint } from '@/lib/paint'
 import type { Style } from '@/lib/render'
-import { Button, Field, Label, Pair } from './controls.styled'
-import { Row, Swatch, SwatchRow, Well } from './ColourControls.styled'
+import { Button, Checkbox, Field, Label, Pair, Range, RangeRow } from './controls.styled'
+import { PaintField } from './PaintField'
+import { Preset, PresetRow, Row } from './ColourControls.styled'
+
+/** Built once: constructing a formatter costs far more than using one. */
+const percent = new Intl.NumberFormat(undefined, { style: 'percent' })
 
 export interface ColourControlsProps {
   style: Style
@@ -20,12 +25,19 @@ export interface ColourControlsProps {
 /**
  * Colour for the code.
  *
- * The app itself stays black and white. These are the only hues on the page, and they
- * belong to the thing being made rather than to the chrome around it — the same rule the
- * other apps in this set apply to their data palettes.
+ * The app itself stays black and white. Every hue on the page belongs to the thing being
+ * made, which is the same rule the other apps in this set apply to their data palettes.
  */
 export function ColourControls({ style, onStyle }: ColourControlsProps) {
-  const eyeFollows = style.eye === null
+  const set = (patch: Partial<Style>) => onStyle((current) => ({ ...current, ...patch }))
+
+  const chosen = (paint: Paint, ground: Paint) =>
+    style.paint.type === 'solid' &&
+    style.background.type === 'solid' &&
+    paint.type === 'solid' &&
+    ground.type === 'solid' &&
+    style.paint.color === paint.color &&
+    style.background.color === ground.color
 
   return (
     <>
@@ -33,89 +45,92 @@ export function ColourControls({ style, onStyle }: ColourControlsProps) {
         <Label as="span" id="palette-label">
           Preset
         </Label>
-        <SwatchRow role="group" aria-labelledby="palette-label">
+        <PresetRow role="group" aria-labelledby="palette-label">
           {PALETTES.map((palette) => {
-            const chosen = palette.dark === style.dark && palette.light === style.light
+            const paint = solid(palette.dark)
+            const ground = solid(palette.light)
             return (
-              <Swatch
+              <Preset
                 key={palette.id}
                 type="button"
-                aria-pressed={chosen}
-                $dark={palette.dark}
-                $light={palette.light}
-                onClick={() =>
-                  onStyle((current) => ({ ...current, dark: palette.dark, light: palette.light }))
-                }
+                aria-pressed={chosen(paint, ground)}
+                $css={`linear-gradient(135deg, ${palette.dark} 0 50%, ${palette.light} 50% 100%)`}
+                onClick={() => set({ paint, background: ground })}
               >
                 <span aria-hidden="true" />
                 {palette.label}
-              </Swatch>
+              </Preset>
             )
           })}
-        </SwatchRow>
+          {GRADIENT_PRESETS.map((preset) => (
+            <Preset
+              key={preset.id}
+              type="button"
+              aria-pressed={toCss(style.paint) === toCss(preset.paint)}
+              $css={toCss(preset.paint)}
+              onClick={() => set({ paint: preset.paint, background: solid('#ffffff') })}
+            >
+              <span aria-hidden="true" />
+              {preset.label}
+            </Preset>
+          ))}
+        </PresetRow>
       </Field>
+
+      <PaintField
+        id="paint-code"
+        label="Code"
+        paint={style.paint}
+        onChange={(paint) => set({ paint })}
+      />
+
+      <PaintField
+        id="paint-ground"
+        label="Background"
+        paint={style.background}
+        onChange={(background) => set({ background })}
+      />
 
       <Pair>
         <Field>
-          <Label htmlFor="colour-dark">Code</Label>
-          <Well>
+          <Checkbox htmlFor="transparent">
             <input
-              id="colour-dark"
-              type="color"
-              value={style.dark}
-              onChange={(event) => onStyle((current) => ({ ...current, dark: event.target.value }))}
+              id="transparent"
+              type="checkbox"
+              checked={style.transparent}
+              onChange={(event) => set({ transparent: event.target.checked })}
             />
-            <output>{style.dark.toUpperCase()}</output>
-          </Well>
+            No background
+          </Checkbox>
+          <p>SVG and PNG keep the transparency. JPEG cannot, and puts it on white.</p>
         </Field>
 
         <Field>
-          <Label htmlFor="colour-light">Background</Label>
-          <Well>
-            <input
-              id="colour-light"
-              type="color"
-              value={style.light}
-              onChange={(event) =>
-                onStyle((current) => ({ ...current, light: event.target.value }))
-              }
+          <Label htmlFor="round">Rounded corners</Label>
+          <RangeRow>
+            <Range
+              id="round"
+              type="range"
+              min={0}
+              max={20}
+              step={1}
+              value={Math.round(style.round * 100)}
+              onChange={(event) => set({ round: Number(event.target.value) / 100 })}
             />
-            <output>{style.light.toUpperCase()}</output>
-          </Well>
+            <span>{percent.format(style.round)}</span>
+          </RangeRow>
         </Field>
       </Pair>
-
-      <Field>
-        <Label htmlFor="colour-eye">Corners</Label>
-        <Row>
-          <Well>
-            <input
-              id="colour-eye"
-              type="color"
-              value={style.eye ?? style.dark}
-              disabled={eyeFollows}
-              onChange={(event) => onStyle((current) => ({ ...current, eye: event.target.value }))}
-            />
-            <output>{(style.eye ?? style.dark).toUpperCase()}</output>
-          </Well>
-          <Button
-            type="button"
-            aria-pressed={!eyeFollows}
-            onClick={() =>
-              onStyle((current) => ({ ...current, eye: eyeFollows ? current.dark : null }))
-            }
-          >
-            {eyeFollows ? 'Colour separately' : 'Match the code'}
-          </Button>
-        </Row>
-        <p>The three square patterns are what a scanner finds first. They can differ.</p>
-      </Field>
 
       <Row>
         <Button
           type="button"
           onClick={() =>
-            onStyle((current) => ({ ...current, dark: current.light, light: current.dark }))
+            onStyle((current) => ({
+              ...current,
+              paint: current.background,
+              background: current.paint,
+            }))
           }
         >
           <ArrowLeftRight aria-hidden="true" /> Swap the two
@@ -124,3 +139,18 @@ export function ColourControls({ style, onStyle }: ColourControlsProps) {
     </>
   )
 }
+
+/** Pairs that only make sense as gradients, so the presets can offer one at all. */
+const GRADIENT_PRESETS: { id: string; label: string; paint: Paint }[] = [
+  {
+    id: 'dusk',
+    label: 'Dusk',
+    paint: { type: 'linear', from: '#2b1b6b', to: '#8a1c4f', angle: 45 },
+  },
+  {
+    id: 'pine',
+    label: 'Pine',
+    paint: { type: 'linear', from: '#0b3d2e', to: '#1d6b4f', angle: 90 },
+  },
+  { id: 'ember', label: 'Ember', paint: { type: 'radial', from: '#7a1f12', to: '#2b0d08' } },
+]

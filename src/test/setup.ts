@@ -21,3 +21,19 @@ if (!window.matchMedia) {
       dispatchEvent: () => false,
     }) as MediaQueryList
 }
+
+/*
+ * jsdom's Blob has no `arrayBuffer`, which the zip writer needs to read what it is given.
+ * The shim is the same shape as the one above: the browser has it, the headless DOM does
+ * not, and the code under test is not the thing that is wrong.
+ */
+if (typeof Blob !== 'undefined' && !Blob.prototype.arrayBuffer) {
+  Blob.prototype.arrayBuffer = function arrayBuffer(this: Blob) {
+    return new Promise<ArrayBuffer>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as ArrayBuffer)
+      reader.onerror = () => reject(reader.error)
+      reader.readAsArrayBuffer(this)
+    })
+  }
+}

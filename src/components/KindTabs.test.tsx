@@ -1,7 +1,11 @@
 import { describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { KINDS } from '@/lib/payloads'
 import { KindTabs } from './KindTabs'
+
+/** Asserted against the table rather than a literal, so adding a kind cannot break this. */
+const LAST = KINDS[KINDS.length - 1]?.id
 
 describe('KindTabs', () => {
   it('marks the chosen tab as selected', () => {
@@ -18,11 +22,12 @@ describe('KindTabs', () => {
     await userEvent.keyboard('{ArrowRight}')
     expect(onSelect).toHaveBeenLastCalledWith('text')
 
+    // The list wraps, so left from the first tab lands on the last one.
     await userEvent.keyboard('{ArrowLeft}')
-    expect(onSelect).toHaveBeenLastCalledWith('phone')
+    expect(onSelect).toHaveBeenLastCalledWith(LAST)
 
     await userEvent.keyboard('{End}')
-    expect(onSelect).toHaveBeenLastCalledWith('phone')
+    expect(onSelect).toHaveBeenLastCalledWith(LAST)
   })
 
   it('keeps only the selected tab in the tab order', () => {

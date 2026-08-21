@@ -6,7 +6,18 @@
  * produces a code that scans but joins the wrong network or drops half a name.
  */
 
-export type KindId = 'link' | 'text' | 'wifi' | 'contact' | 'email' | 'sms' | 'phone'
+export type KindId =
+  | 'link'
+  | 'text'
+  | 'wifi'
+  | 'contact'
+  | 'email'
+  | 'sms'
+  | 'phone'
+  | 'whatsapp'
+  | 'event'
+  | 'location'
+  | 'crypto'
 
 export interface Kind {
   id: KindId
@@ -23,6 +34,14 @@ export const KINDS: [Kind, ...Kind[]] = [
   { id: 'email', label: 'Email', hint: 'Scanning opens a draft email.' },
   { id: 'sms', label: 'SMS', hint: 'Scanning opens a draft message.' },
   { id: 'phone', label: 'Phone', hint: 'Scanning offers to call the number.' },
+  {
+    id: 'whatsapp',
+    label: 'WhatsApp',
+    hint: 'Scanning opens a WhatsApp chat with the message ready.',
+  },
+  { id: 'event', label: 'Event', hint: 'Scanning offers to put the event in a calendar.' },
+  { id: 'location', label: 'Location', hint: 'Scanning opens the point in a maps app.' },
+  { id: 'crypto', label: 'Crypto', hint: 'Scanning opens a wallet with the address filled in.' },
 ]
 
 export interface LinkValue {
@@ -60,6 +79,27 @@ export interface SmsValue {
 export interface PhoneValue {
   number: string
 }
+export interface WhatsappValue {
+  number: string
+  message: string
+}
+export interface EventValue {
+  title: string
+  location: string
+  start: string
+  end: string
+  notes: string
+}
+export interface LocationValue {
+  latitude: string
+  longitude: string
+  label: string
+}
+export interface CryptoValue {
+  coin: 'bitcoin' | 'ethereum' | 'litecoin'
+  address: string
+  amount: string
+}
 
 export interface Draft {
   link: LinkValue
@@ -69,6 +109,10 @@ export interface Draft {
   email: EmailValue
   sms: SmsValue
   phone: PhoneValue
+  whatsapp: WhatsappValue
+  event: EventValue
+  location: LocationValue
+  crypto: CryptoValue
 }
 
 export const EMPTY_DRAFT: Draft = {
@@ -89,6 +133,10 @@ export const EMPTY_DRAFT: Draft = {
   email: { to: '', subject: '', body: '' },
   sms: { number: '', message: '' },
   phone: { number: '' },
+  whatsapp: { number: '', message: '' },
+  event: { title: '', location: '', start: '', end: '', notes: '' },
+  location: { latitude: '', longitude: '', label: '' },
+  crypto: { coin: 'bitcoin', address: '', amount: '' },
 }
 
 /** One kind's fields, keyed by name — the shape the generic form renders from. */
@@ -195,7 +243,67 @@ export function encode(kind: KindId, draft: Draft): string {
 
     case 'phone':
       return draft.phone.number.trim() ? `tel:${draft.phone.number.trim()}` : ''
+
+    case 'whatsapp': {
+      const { number, message } = draft.whatsapp
+      // wa.me wants the number with no punctuation and no leading plus.
+      const digits = number.replace(/\D/g, '')
+      if (!digits) return ''
+      const query = message.trim() ? `?text=${encodeURIComponent(message.trim())}` : ''
+      return `https://wa.me/${digits}${query}`
+    }
+
+    case 'event': {
+      const { title, location, start, end, notes } = draft.event
+      if (!title.trim() && !start.trim()) return ''
+      const lines = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'BEGIN:VEVENT',
+        title.trim() && `SUMMARY:${escapeVcard(title.trim())}`,
+        location.trim() && `LOCATION:${escapeVcard(location.trim())}`,
+        start.trim() && `DTSTART:${toIcalStamp(start)}`,
+        end.trim() && `DTEND:${toIcalStamp(end)}`,
+        notes.trim() && `DESCRIPTION:${escapeVcard(notes.trim())}`,
+        'END:VEVENT',
+        'END:VCALENDAR',
+      ].filter(Boolean) as string[]
+      return lines.join('\r\n')
+    }
+
+    case 'location': {
+      const { latitude, longitude, label } = draft.location
+      if (!latitude.trim() || !longitude.trim()) return ''
+      // A geo: URI is machine format: the separator is a comma and the decimal mark is a
+      // point, whatever the reader's locale would prefer.
+      const point = `geo:${latitude.trim()},${longitude.trim()}`
+      return label.trim()
+        ? `${point}?q=${latitude.trim()},${longitude.trim()}(${encodeURIComponent(label.trim())})`
+        : point
+    }
+
+    case 'crypto': {
+      const { coin, address, amount } = draft.crypto
+      if (!address.trim()) return ''
+      // BIP-21 and the schemes that copied it: the amount is a machine value, so it keeps
+      // a point for a decimal mark whatever the reader's locale uses.
+      const query = amount.trim() ? `?amount=${amount.trim().replace(',', '.')}` : ''
+      return `${coin}:${address.trim()}${query}`
+    }
   }
+}
+
+/**
+ * A local date and time, as iCalendar spells one.
+ *
+ * `2026-08-21T18:30` from a datetime-local input becomes `20260821T183000`, with no zone
+ * suffix — which iCalendar reads as "in whatever zone the reader is in". That is what
+ * someone printing a poster for a local event means, and converting to UTC would move the
+ * time for everyone who scans it somewhere else.
+ */
+function toIcalStamp(value: string): string {
+  const cleaned = value.trim().replace(/[-:]/g, '')
+  return cleaned.length === 13 ? `${cleaned}00` : cleaned
 }
 
 /** A short label for a saved code, so history reads as content rather than as a payload. */
@@ -218,5 +326,13 @@ export function summarize(kind: KindId, draft: Draft): string {
       return draft.sms.number.trim()
     case 'phone':
       return draft.phone.number.trim()
+    case 'whatsapp':
+      return draft.whatsapp.number.trim()
+    case 'event':
+      return draft.event.title.trim()
+    case 'location':
+      return draft.location.label.trim() || draft.location.latitude.trim()
+    case 'crypto':
+      return draft.crypto.address.trim().slice(0, 16)
   }
 }

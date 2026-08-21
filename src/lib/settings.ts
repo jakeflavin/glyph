@@ -1,15 +1,20 @@
 import { EMPTY_DRAFT, KINDS, type Draft } from './payloads'
+import { solid, type Paint } from './paint'
 import type { Style } from './render'
 
 export const DEFAULT_STYLE: Style = {
-  shape: 'square',
-  eyeShape: 'square',
+  module: 'square',
+  eyeFrame: 'square',
+  eyeBall: 'square',
   margin: 4,
-  dark: '#000000',
-  light: '#ffffff',
-  eye: null,
+  paint: solid('#000000'),
+  background: solid('#ffffff'),
+  transparent: false,
+  round: 0,
+  eyeFramePaint: null,
+  eyeBallPaint: null,
   logo: null,
-  caption: '',
+  frame: { style: 'none', caption: '', position: 'below' },
 }
 
 /**
@@ -35,26 +40,86 @@ export function readDraft(raw: string | null): Draft {
   }
 }
 
-/** What the first build stored in place of a pair of colours. */
+/**
+ * What earlier builds stored in place of the current style.
+ *
+ * The first had one `invert` flag rather than a pair of colours. The second had a pair of
+ * hex strings, one shape for both parts of a finder pattern, and a bare caption. Both are
+ * still on people's machines, so both are still read.
+ */
 interface LegacyStyle {
   invert?: boolean
+  dark?: string
+  light?: string
+  eye?: string | null
+  shape?: string
+  eyeShape?: string
+  caption?: string
+}
+
+const LEGACY_MODULES: Record<string, Style['module']> = {
+  square: 'square',
+  rounded: 'rounded',
+  dot: 'dot',
+}
+
+const LEGACY_EYES: Record<string, [Style['eyeFrame'], Style['eyeBall']]> = {
+  square: ['square', 'square'],
+  rounded: ['rounded', 'rounded'],
+  circle: ['circle', 'circle'],
 }
 
 export function readStyle(raw: string | null): Style {
   if (!raw) return DEFAULT_STYLE
   try {
-    const { invert, ...stored } = JSON.parse(raw) as Partial<Style> & LegacyStyle
-    const merged: Style = { ...DEFAULT_STYLE, ...stored }
-
-    // The first build had one `invert` flag where there are now two colours. A stored
-    // `true` means the pair was the other way round. The flag is dropped rather than
-    // carried: leaving it in the object it writes back would have it read for ever.
-    if (invert && !stored.dark) {
-      merged.dark = DEFAULT_STYLE.light
-      merged.light = DEFAULT_STYLE.dark
+    const stored = JSON.parse(raw) as Partial<Style> & LegacyStyle
+    const legacy = migrate(stored)
+    return {
+      ...DEFAULT_STYLE,
+      ...legacy,
+      // Nested objects merge rather than replace, for the same reason the whole thing does.
+      frame: { ...DEFAULT_STYLE.frame, ...legacy.frame },
+      logo: legacy.logo ? { ...EMPTY_LOGO, ...legacy.logo } : null,
     }
-    return merged
   } catch {
     return DEFAULT_STYLE
   }
+}
+
+const EMPTY_LOGO = { src: '', scale: 0.2, margin: 0.5, knockout: true, round: false }
+
+function migrate(stored: Partial<Style> & LegacyStyle): Partial<Style> {
+  const { invert, dark, light, eye, shape, eyeShape, caption, ...current } = stored
+
+  // Nothing to carry: this was written by a build that already had the current shape.
+  if (!invert && !dark && !light && !shape && !eyeShape && !caption) return current
+
+  const out: Partial<Style> = { ...current }
+
+  if (invert && !dark) {
+    out.paint = solid('#ffffff')
+    out.background = solid('#000000')
+  }
+  if (dark) out.paint = solid(dark)
+  if (light) out.background = solid(light)
+  if (eye) out.eyeFramePaint = solid(eye)
+
+  const module = shape ? LEGACY_MODULES[shape] : undefined
+  if (module) out.module = module
+
+  const eyes = eyeShape ? LEGACY_EYES[eyeShape] : undefined
+  if (eyes) {
+    out.eyeFrame = eyes[0]
+    out.eyeBall = eyes[1]
+  }
+
+  if (caption) out.frame = { ...DEFAULT_STYLE.frame, ...current.frame, caption }
+
+  return out
+}
+
+/** A paint that a stored value may have written as a bare hex string. */
+export function asPaint(value: Paint | string | null | undefined, fallback: Paint): Paint {
+  if (!value) return fallback
+  return typeof value === 'string' ? solid(value) : value
 }

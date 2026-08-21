@@ -70,6 +70,13 @@ function renderField(
             </option>
           ))}
         </Select>
+      ) : field.type === 'datetime' ? (
+        <Input
+          id={id}
+          type="datetime-local"
+          value={text}
+          onChange={(event) => onChange(field.name, event.target.value)}
+        />
       ) : (
         <Input
           id={id}

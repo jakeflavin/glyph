@@ -29,23 +29,56 @@ counts the scans. If you need either of those, this is the wrong tool.
 | Email | `mailto:` with the subject and body percent-encoded |
 | SMS | `SMSTO:`, which is the form both phones act on |
 | Phone | `tel:` |
+| WhatsApp | `wa.me`, with the number stripped to digits |
+| Event | A one-event `VCALENDAR`, in the reader's own timezone |
+| Location | A `geo:` URI |
+| Crypto | BIP-21 and the schemes that copied it |
 
 ## What can be changed
 
 | | |
 |---|---|
-| Colour | The modules, the ground, and the three corner patterns on their own |
-| Shape | Square, round or dot modules; square, round or circle corners |
-| Logo | An image in the middle, snapped to the module grid and knocked out behind |
-| Caption | A line under the code, in the downloaded file as well as on screen |
+| Colour | Flat, or a linear or radial gradient, on the modules and on the ground |
+| Corner colour | The finder frames and their centres, each on their own or following |
+| Module shape | Square, rounded, smooth, classy, dots, diamond, or merged into rows or columns |
+| Corner shape | Frame and centre separately: square, rounded, circle, leaf, cushion, diamond |
+| Logo | An uploaded image or one of six built-in marks, sized, with clearance, knocked out or not, square or round |
+| Frame | None, an outline, a caption bar, or a card, with the caption above or below |
 | Correction | L to H, which is what decides how much of the code a logo can cover |
-| Quiet zone | 0 to 8 modules |
+| Quiet zone | 0 to 8 modules, and rounded corners on the background |
+| Transparency | No background at all, for SVG and PNG |
 
-None of it changes what the code says, and the app checks the two things that decide
-whether it still reads: the contrast between the pair of colours, and whether the
-correction level is high enough for the logo covering it.
+None of it changes what the code says.
 
-Export is SVG, PNG at four widths, a copy to the clipboard, or print.
+## The two checks
+
+Every other generator lets you style a code until it stops working and says nothing.
+
+- **Contrast** is measured across both ends of both paints, since a scanner thresholds the
+  image rather than reading hue, and a gradient can fail at one end only.
+- **The code is read back.** The app draws it at 240 pixels across — smaller than a phone
+  would meet it — and decodes its own drawing with the browser's barcode reader. What it
+  reports is that this code scans, rather than that it should.
+
+## Getting the file out
+
+SVG, PNG at four widths, JPEG, WEBP, PDF, EPS, a copy to the clipboard as an image or as
+SVG markup, or print.
+
+PDF and EPS are vector and 80 mm wide. The PDF carries real gradient shadings; EPS is
+PostScript Level 2 and has no gradient, so it flattens — and both leave out a logo, which
+the app tells you before you download one.
+
+## More than one at a time
+
+Paste a list, one code per line, add `, a name` to any of them to name its file, and the
+whole lot comes back as a single zip — PNG or SVG, in whatever style is set above. It runs
+in the tab, on the same renderer, and touches no server. The zip writer is in `lib/zip.ts`
+for the same reason as everything else here: the format, for this one case, is shorter than
+the dependency would be.
+
+A style can also be kept under a name and re-applied, which is the paid tools' brand kit,
+except it is a row of chips in `localStorage`.
 
 ## Running it
 
@@ -79,20 +112,31 @@ from the same geometry, so what is on screen cannot drift from what is downloade
 
 ```
 src/
-  lib/payloads.ts   what each kind encodes, and the escaping each format needs
-  lib/fields.ts     the form, as data: one table of fields per kind
-  lib/matrix.ts     text -> modules
-  lib/render.ts     modules -> geometry -> SVG, and the same geometry -> PNG
-  lib/colors.ts     contrast, because a scanner reads contrast and not hue
-  lib/image.ts      an uploaded logo, resized and stripped of its EXIF
-  components/       everything that renders
-  hooks/            state that outlives a render
+  lib/payloads.ts    what each kind encodes, and the escaping each format needs
+  lib/fields.ts      the form, as data: one table of fields per kind
+  lib/matrix.ts      text -> modules
+  lib/shapes.ts      every shape, as one primitive: a rounded rect with four radii
+  lib/paint.ts       a fill: one colour, or two with a direction
+  lib/render.ts      modules + style -> a drawing, in module units
+  lib/emit-svg.ts    a drawing -> SVG
+  lib/emit-raster.ts a drawing -> canvas -> PNG, JPEG, WEBP
+  lib/emit-vector.ts a drawing -> PDF, and -> EPS
+  lib/scanCheck.ts   draw it, then read it back
+  lib/colors.ts      contrast, because a scanner reads contrast and not hue
+  lib/zip.ts         a stored-not-compressed archive, for the bulk run
+  components/        everything that renders
+  hooks/             state that outlives a render
 ```
 
-`render.ts` is deliberately the widest module. It holds the geometry in module units —
-the data path, the finder path, where a logo sits, where a caption sits — and both
-renderers read from it. The preview draws that geometry as JSX so React escapes the
-caption; the file draws it as a string. Neither owns the shapes.
+The shape of it is one plan and five renderers. `render.ts` decides *what* to draw — the
+data prims, the finder rings, where a logo sits, where a caption sits — in module units,
+and knows nothing about any output format. Each emitter turns that same plan into its own
+syntax, and the preview is a sixth: it draws the plan as JSX, so React escapes the caption
+for free.
+
+That is what makes six formats affordable. Every shape is a rounded rectangle with four
+corner radii, so each format needs one curve routine rather than one per shape, and a new
+module shape is an entry in `shapes.ts` that all six pick up at once.
 
 Conventions — layout, styling, testing — are the portfolio's, in
 [STANDARDS.md](https://github.com/jakeflavin/portfolio/blob/main/docs/STANDARDS.md).

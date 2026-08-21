@@ -1,56 +1,84 @@
-import {
-  CAPTION_FONT,
-  captionLayout,
-  coloursOf,
-  dataPath,
-  eyePath,
-  logoBox,
-  viewBoxOf,
-  type Style,
-} from '@/lib/render'
-import type { Matrix } from '@/lib/matrix'
+import { layerPath, paintRegistry } from '@/lib/emit-svg'
+import { CAPTION_FONT, type Drawing } from '@/lib/render'
 
 export interface CodeArtProps {
-  matrix: Matrix
-  style: Style
+  drawing: Drawing
   /** Read out to anyone who cannot see the code, since the image itself says nothing. */
   title: string
+  crisp: boolean
 }
 
 /**
  * The symbol on screen.
  *
- * Built from the same geometry as the downloaded file, so the preview cannot drift from
- * what is saved. It is drawn as JSX rather than by injecting the file's own markup,
+ * Built from the same plan as every downloaded format, so the preview cannot drift from
+ * what is saved. It is JSX rather than the SVG file's own markup injected wholesale,
  * because the caption is text somebody typed and React escapes it here for free.
  */
-export function CodeArt({ matrix, style, title }: CodeArtProps) {
-  const { width, height } = viewBoxOf(matrix, style)
-  const { dark, light, eye } = coloursOf(style)
-  const logo = logoBox(matrix, style)
-  const caption = captionLayout(matrix, style)
+export function CodeArt({ drawing, title, crisp }: CodeArtProps) {
+  const { width, height } = drawing
+  const paints = paintRegistry(width)
+
+  // Read in the same order the file writes them, so both end up with the same ids.
+  const background = drawing.background ? paints.ref(drawing.background.paint) : null
+  const layers = drawing.layers.map((layer) => ({ layer, fill: paints.ref(layer.paint) }))
+  const caption = drawing.caption
+    ? { ...drawing.caption, fill: paints.ref(drawing.caption.paint) }
+    : null
+  const defs = paints.defs.join('')
 
   return (
     <svg
       viewBox={`0 0 ${width} ${height}`}
       role="img"
       aria-label={title}
-      shapeRendering={style.shape === 'square' ? 'crispEdges' : undefined}
+      shapeRendering={crisp ? 'crispEdges' : undefined}
     >
-      <rect width={width} height={height} fill={light} />
-      <path fill={dark} d={dataPath(matrix, style)} />
-      <path fill={eye} fillRule="evenodd" d={eyePath(matrix, style)} />
+      {/*
+        Gradient definitions, built entirely from numbers and colours this app generated.
+        No text anyone typed reaches them, which is what makes injecting them safe — the
+        caption below is a JSX child precisely because it is not.
+      */}
+      {defs && <defs dangerouslySetInnerHTML={{ __html: defs }} />}
 
-      {logo && style.logo && (
+      {background && (
+        <rect
+          width={width}
+          height={height}
+          rx={drawing.background ? drawing.background.round * width : 0}
+          ry={drawing.background ? drawing.background.round * width : 0}
+          fill={background}
+        />
+      )}
+
+      {layers.map((entry, index) => (
+        <path
+          key={index}
+          fill={entry.fill}
+          fillRule={entry.layer.holes?.length ? 'evenodd' : undefined}
+          d={layerPath(entry.layer)}
+        />
+      ))}
+
+      {drawing.logo && (
         <>
-          <rect x={logo.x} y={logo.y} width={logo.size} height={logo.size} fill={light} />
+          {drawing.logo.round && (
+            <clipPath id="g-logo-clip">
+              <circle
+                cx={drawing.logo.x + drawing.logo.size / 2}
+                cy={drawing.logo.y + drawing.logo.size / 2}
+                r={drawing.logo.size / 2}
+              />
+            </clipPath>
+          )}
           <image
-            x={logo.x + logo.size * 0.08}
-            y={logo.y + logo.size * 0.08}
-            width={logo.size * 0.84}
-            height={logo.size * 0.84}
+            x={drawing.logo.x}
+            y={drawing.logo.y}
+            width={drawing.logo.size}
+            height={drawing.logo.size}
             preserveAspectRatio="xMidYMid meet"
-            href={style.logo.src}
+            clipPath={drawing.logo.round ? 'url(#g-logo-clip)' : undefined}
+            href={drawing.logo.src}
           />
         </>
       )}
@@ -59,9 +87,9 @@ export function CodeArt({ matrix, style, title }: CodeArtProps) {
         <text
           x={caption.x}
           y={caption.y}
-          fill={dark}
+          fill={caption.fill}
           fontFamily={CAPTION_FONT}
-          fontSize={caption.fontSize}
+          fontSize={caption.size}
           fontWeight={600}
           textAnchor="middle"
         >

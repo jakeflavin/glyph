@@ -1,33 +1,32 @@
 import styled from 'styled-components'
 import { TOUCH } from './controls.styled'
 
-export const PresetRow = styled.div`
+export const TileRow = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 `
 
-/** A preset carries the fill it applies rather than a name alone, so it is picked by eye. */
-export const Preset = styled.button<{ $css: string }>`
+/** A sample of the shape, drawn by the renderer, with its name under the eye's own reading. */
+export const Tile = styled.button`
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  min-height: 34px;
-  padding: 0 11px 0 8px;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 12px 0 8px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--radius);
   background: var(--bg);
   color: var(--dim);
   font-size: var(--font-small);
   cursor: pointer;
 
-  span {
-    width: 14px;
-    height: 14px;
-    border-radius: 4px;
+  svg {
+    width: 18px;
+    height: 18px;
     flex: none;
-    border: 1px solid var(--line);
-    background: ${(props) => props.$css};
+    fill: var(--text);
+    opacity: 0.75;
   }
 
   &:hover {
@@ -39,19 +38,18 @@ export const Preset = styled.button<{ $css: string }>`
   ${(props) =>
     props['aria-pressed'] === true &&
     `&& {
+      background: var(--text);
       border-color: var(--text);
-      color: var(--text);
+      color: var(--ink);
       font-weight: 600;
+
+      svg {
+        fill: var(--ink);
+        opacity: 1;
+      }
     }`}
 
   ${TOUCH} {
     min-height: 44px;
   }
-`
-
-export const Row = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
 `

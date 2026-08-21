@@ -18,3 +18,29 @@ export const Verdict = styled.p<{ $level: ContrastVerdict }>`
   line-height: 1.5;
   color: ${(props) => (props.$level === 'good' ? 'var(--dim)' : 'var(--danger)')};
 `
+
+/**
+ * The read-back result.
+ *
+ * The app draws the code, then scans its own drawing. Nothing else on the page can say
+ * "this works" rather than "this should work", so it gets a line of its own.
+ */
+export const Check = styled.p<{ $level: ContrastVerdict }>`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid ${(props) => (props.$level === 'good' ? 'var(--line)' : 'var(--danger)')};
+  border-radius: var(--radius);
+  background: var(--bg);
+  font-size: var(--font-tiny);
+  line-height: 1.5;
+  color: ${(props) => (props.$level === 'good' ? 'var(--dim)' : 'var(--danger)')};
+
+  svg {
+    width: 14px;
+    height: 14px;
+    flex: none;
+  }
+`
