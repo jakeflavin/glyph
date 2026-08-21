@@ -206,10 +206,11 @@ export const Quiet = styled.div`
 `
 
 export const Payload = styled.details`
+  /* Padding rather than a flex box with a min-height: a summary laid out as flex loses
+     its disclosure triangle in Chrome, and a disclosure that does not look like one is a
+     worse problem than the one being fixed. */
   summary {
-    display: flex;
-    align-items: center;
-    min-height: 24px;
+    padding: 2px 0;
     font-size: var(--font-small);
     color: var(--dim);
     cursor: pointer;
@@ -217,7 +218,7 @@ export const Payload = styled.details`
 
   ${TOUCH} {
     summary {
-      min-height: 44px;
+      padding: 12px 0;
     }
   }
 
