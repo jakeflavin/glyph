@@ -1,12 +1,11 @@
 import { FIELDS, type FieldSpec } from '@/lib/fields'
 import type { KindId } from '@/lib/payloads'
-import { Checkbox, Hint, Input, Label, Select, Textarea } from './controls.styled'
+import { Checkbox, Input, Label, Select, Textarea } from './controls.styled'
 import { Cell, Grid } from './ContentForm.styled'
 
 export interface ContentFormProps {
   kind: KindId
   values: Record<string, string | boolean>
-  hint: string
   onChange: (name: string, value: string | boolean) => void
 }
 
@@ -16,18 +15,15 @@ export interface ContentFormProps {
  * The fields differ; the layout, the labels and the touch sizing do not, so there is one
  * renderer rather than seven near-identical forms.
  */
-export function ContentForm({ kind, values, hint, onChange }: ContentFormProps) {
+export function ContentForm({ kind, values, onChange }: ContentFormProps) {
   return (
-    <>
-      <Grid>
-        {FIELDS[kind].map((field) => (
-          <Cell key={field.name} $wide={field.wide ?? false}>
-            {renderField(kind, field, values[field.name], onChange)}
-          </Cell>
-        ))}
-      </Grid>
-      <Hint>{hint}</Hint>
-    </>
+    <Grid>
+      {FIELDS[kind].map((field) => (
+        <Cell key={field.name} $wide={field.wide ?? false}>
+          {renderField(kind, field, values[field.name], onChange)}
+        </Cell>
+      ))}
+    </Grid>
   )
 }
 

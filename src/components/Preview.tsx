@@ -123,7 +123,7 @@ export function Preview({ matrix, style, ecc, payload, label, kind, error, onUse
           <Download aria-hidden="true" /> PNG
         </Button>
         <SizeSelect
-          aria-label="PNG size in pixels"
+          aria-label="PNG width in pixels"
           value={pngSize}
           onChange={(event) => setPngSize(Number(event.target.value))}
         >

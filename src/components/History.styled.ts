@@ -1,31 +1,6 @@
 import styled from 'styled-components'
 import { TOUCH } from './controls.styled'
 
-export const Panel = styled.section`
-  margin-top: 32px;
-  padding-top: 22px;
-  border-top: 1px solid var(--line);
-
-  @media print {
-    display: none;
-  }
-`
-
-export const Head = styled.header`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-
-  h2 {
-    font-size: var(--font-tiny);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--dim);
-  }
-`
-
 export const Empty = styled.p`
   margin: 0;
   font-size: var(--font-small);
@@ -46,8 +21,8 @@ export const Item = styled.li`
   gap: 10px;
   border-bottom: 1px solid var(--line);
 
-  &:first-child {
-    border-top: 1px solid var(--line);
+  &:last-child {
+    border-bottom: 0;
   }
 `
 

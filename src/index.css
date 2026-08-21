@@ -1,10 +1,10 @@
 /*
  * Glyph — black and white, and nothing else.
  *
- * A QR code is two colours by definition, so the app is too. There is no accent hue: the
- * interactive colour is the text colour, and a selected control inverts rather than tints.
- * That keeps every state legible in both themes without a contrast check per hue, and it
- * means the page never competes with the thing it is drawing.
+ * The app is monochrome so the code does not have to be. Every hue on the page belongs to
+ * the thing being made: the code's own two colours, and the one red the app uses to say
+ * something is wrong. There is no accent, so a selected control inverts rather than tints,
+ * which keeps every state legible in both themes without a contrast check per hue.
  *
  * The token names are the ones shared across the set — --bg, --surface, --text, --dim,
  * --line — so moving between these apps costs nothing.
@@ -20,10 +20,12 @@
   --font-small: 13px;
   --font-tiny: 12px;
 
-  --bg: #ffffff;
-  --surface: #fafafa;
-  --surface-hi: #f0f0f0;
-  --line: #e2e2e2;
+  /* The page is the ground and every panel is a surface above it, so the two are a real
+     step apart rather than a hairline. Dark does the same step in the other direction. */
+  --bg: #f2f2f1;
+  --surface: #ffffff;
+  --surface-hi: #ebebea;
+  --line: #dededc;
   --line-strong: #111111;
   --text: #111111;
   --dim: #666666;
@@ -31,28 +33,21 @@
   --danger: #b3261e;
 
   --radius: 6px;
-
-  /* The paper the code is drawn on. It stays white in both themes, because a scanner
-     reads contrast and a dark ground is the one thing that stops some of them. */
-  --paper: #ffffff;
-  --paper-line: #e2e2e2;
+  --radius-lg: 10px;
 
   color-scheme: light;
 }
 
 :root[data-theme='dark'] {
-  --bg: #0d0d0d;
-  --surface: #151515;
-  --surface-hi: #202020;
-  --line: #2a2a2a;
+  --bg: #0a0a0a;
+  --surface: #161616;
+  --surface-hi: #232323;
+  --line: #2b2b2b;
   --line-strong: #f2f2f2;
   --text: #f2f2f2;
   --dim: #9b9b9b;
-  --ink: #0d0d0d;
+  --ink: #0a0a0a;
   --danger: #ff8a80;
-
-  --paper: #ffffff;
-  --paper-line: #2a2a2a;
 
   color-scheme: dark;
 }

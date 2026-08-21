@@ -2,8 +2,9 @@ import { X } from 'lucide-react'
 import { KINDS, type Draft, type KindId } from '@/lib/payloads'
 import type { HistoryEntry } from '@/lib/history'
 import { relativeTime } from '@/lib/relativeTime'
+import { Card } from './Card'
 import { Button } from './controls.styled'
-import { Empty, Head, Item, List, Panel, Remove, Restore, When } from './History.styled'
+import { Empty, Item, List, Remove, Restore, When } from './History.styled'
 
 export interface HistoryProps {
   entries: HistoryEntry[]
@@ -26,16 +27,16 @@ const LABELS: Record<KindId, string> = Object.fromEntries(
  */
 export function History({ entries, now, onRestore, onRemove, onClear }: HistoryProps) {
   return (
-    <Panel aria-label="Recent codes">
-      <Head>
-        <h2>Recent</h2>
-        {entries.length > 0 && (
+    <Card
+      title="Recent"
+      action={
+        entries.length > 0 ? (
           <Button type="button" onClick={onClear}>
             Clear
           </Button>
-        )}
-      </Head>
-
+        ) : undefined
+      }
+    >
       {entries.length === 0 ? (
         <Empty>Codes you download or copy are listed here. They never leave this device.</Empty>
       ) : (
@@ -62,6 +63,6 @@ export function History({ entries, now, onRestore, onRemove, onClear }: HistoryP
           ))}
         </List>
       )}
-    </Panel>
+    </Card>
   )
 }

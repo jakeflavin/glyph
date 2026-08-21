@@ -2,11 +2,15 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Header } from './components/Header'
 import { KindTabs } from './components/KindTabs'
 import { ContentForm } from './components/ContentForm'
-import { StylePanel } from './components/StylePanel'
+import { Card } from './components/Card'
+import { ColourControls } from './components/ColourControls'
+import { ShapeControls } from './components/ShapeControls'
+import { LogoControls } from './components/LogoControls'
+import { ScanControls } from './components/ScanControls'
 import { Preview } from './components/Preview'
 import { History } from './components/History'
 import { ConfirmDialog } from './components/ConfirmDialog'
-import { Column, Columns, CodeColumn, Foot, FormPanel, Page } from './App.styled'
+import { Columns, Controls, Foot, Page } from './App.styled'
 import { usePersistentState } from './hooks/usePersistentState'
 import { useTheme } from './hooks/useTheme'
 import { buildMatrix, type Ecc } from './lib/matrix'
@@ -22,7 +26,16 @@ import {
 } from './lib/payloads'
 import { addEntry, removeEntry, type HistoryEntry } from './lib/history'
 
-const DEFAULT_STYLE: Style = { shape: 'square', margin: 4, invert: false }
+const DEFAULT_STYLE: Style = {
+  shape: 'square',
+  eyeShape: 'square',
+  margin: 4,
+  dark: '#000000',
+  light: '#ffffff',
+  eye: null,
+  logo: null,
+  caption: '',
+}
 
 /**
  * A draft written by an older build is missing whatever fields have been added since, and
@@ -44,6 +57,26 @@ function readDraft(raw: string | null): Draft {
   }
 }
 
+/**
+ * The same merge for the appearance, plus one migration: the first build had a single
+ * `invert` flag where there are now two colours, and a stored `true` means the pair was
+ * the other way round.
+ */
+function readStyle(raw: string | null): Style {
+  if (!raw) return DEFAULT_STYLE
+  try {
+    const stored = JSON.parse(raw) as Partial<Style> & { invert?: boolean }
+    const merged: Style = { ...DEFAULT_STYLE, ...stored }
+    if (stored.invert && !stored.dark) {
+      merged.dark = DEFAULT_STYLE.light
+      merged.light = DEFAULT_STYLE.dark
+    }
+    return merged
+  } catch {
+    return DEFAULT_STYLE
+  }
+}
+
 export function App() {
   const { theme, setTheme } = useTheme()
   const [kind, setKind] = usePersistentState<KindId>('glyph.kind', 'link')
@@ -51,7 +84,9 @@ export function App() {
     read: readDraft,
   })
   const [ecc, setEcc] = usePersistentState<Ecc>('glyph.ecc', 'M')
-  const [style, setStyle] = usePersistentState<Style>('glyph.style', DEFAULT_STYLE)
+  const [style, setStyle] = usePersistentState<Style>('glyph.style', DEFAULT_STYLE, {
+    read: readStyle,
+  })
   const [history, setHistory] = usePersistentState<HistoryEntry[]>('glyph.history', [])
   const [clearing, setClearing] = useState(false)
   const [now, setNow] = useState(() => Date.now())
@@ -74,8 +109,7 @@ export function App() {
   const onField = useCallback(
     (name: string, value: string | boolean) => {
       setDraft((current) => {
-        // The field table is the only place a field name exists, so this is the one point
-        // where a name meets its record. The tables are checked against `Draft` by tests.
+        // `fieldsOf` is the read side of this; here the name goes back into its record.
         const section = { ...current[kind], [name]: value } as Draft[typeof kind]
         return { ...current, [kind]: section }
       })
@@ -112,19 +146,45 @@ export function App() {
       <Header theme={theme} onTheme={setTheme} />
 
       <Columns>
-        <Column>
-          <FormPanel aria-label="What the code says">
+        <Preview
+          matrix={matrix}
+          style={style}
+          ecc={ecc}
+          payload={payload}
+          label={label}
+          kind={kind}
+          error={error}
+          onUse={onUse}
+        />
+
+        <Controls>
+          <Card title="What the code says" note={current.hint}>
             <KindTabs kind={kind} onSelect={setKind} />
             <div id="code-form" role="tabpanel" aria-labelledby={`tab-${kind}`}>
-              <ContentForm
-                kind={kind}
-                values={fieldsOf(draft, kind)}
-                hint={current.hint}
-                onChange={onField}
-              />
+              <ContentForm kind={kind} values={fieldsOf(draft, kind)} onChange={onField} />
             </div>
-            <StylePanel ecc={ecc} style={style} onEcc={setEcc} onStyle={setStyle} />
-          </FormPanel>
+          </Card>
+
+          <Card title="Colour">
+            <ColourControls style={style} onStyle={setStyle} />
+          </Card>
+
+          <Card title="Shape">
+            <ShapeControls style={style} onStyle={setStyle} />
+          </Card>
+
+          <Card title="Logo and caption">
+            <LogoControls
+              style={style}
+              correctionIsHighest={ecc === 'H'}
+              onStyle={setStyle}
+              onCaption={(caption) => setStyle({ ...style, caption })}
+            />
+          </Card>
+
+          <Card title="Scanning">
+            <ScanControls ecc={ecc} style={style} onEcc={setEcc} onStyle={setStyle} />
+          </Card>
 
           <History
             entries={history}
@@ -133,20 +193,7 @@ export function App() {
             onRemove={(id) => setHistory((entries) => removeEntry(entries, id))}
             onClear={() => setClearing(true)}
           />
-        </Column>
-
-        <CodeColumn>
-          <Preview
-            matrix={matrix}
-            style={style}
-            ecc={ecc}
-            payload={payload}
-            label={label}
-            kind={kind}
-            error={error}
-            onUse={onUse}
-          />
-        </CodeColumn>
+        </Controls>
       </Columns>
 
       <Foot>

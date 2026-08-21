@@ -1,33 +1,56 @@
 import styled from 'styled-components'
 import { TOUCH } from './controls.styled'
 
+/**
+ * The code's own surface, and the one panel that stays put.
+ *
+ * Sticky is what makes the left column work: every control is on the right, and the point
+ * of putting the code opposite them is that it is still on screen when you reach the last
+ * of them.
+ */
 export const Panel = styled.section`
   position: sticky;
-  top: 24px;
+  top: 20px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
 
-  /* Stacked, the column is as wide as the page, and a 340px code centred in a 900px
-     slab of paper reads as a banner rather than as a card. The whole panel narrows. */
-  @media (max-width: 900px) {
+  @media (max-width: 980px) {
     position: static;
-    max-width: 420px;
+    max-width: 460px;
     margin: 0 auto;
+    width: 100%;
+  }
+
+  @media (max-width: 600px) {
+    padding: 14px;
   }
 
   @media print {
     position: static;
     max-width: none;
+    border: 0;
+    padding: 0;
+    background: none;
   }
 `
 
+/**
+ * The code sits on its own ground rather than on the app's.
+ *
+ * The symbol paints its own background — that colour is part of what gets downloaded — so
+ * this is only the frame around it, and it holds the code's shape while it is empty.
+ */
 export const Paper = styled.figure`
   margin: 0;
-  padding: 18px;
-  border: 1px solid var(--paper-line);
+  padding: 16px;
+  border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: var(--paper);
+  background: var(--bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -36,13 +59,12 @@ export const Paper = styled.figure`
     display: block;
     width: 100%;
     height: auto;
-    max-width: 340px;
+    max-width: 300px;
+    border-radius: 2px;
   }
 
-  /* On a phone the code is the first thing on the page, and at 340px it fills the
-     screen on its own — the tabs below it would never be seen without a scroll. */
   @media (max-width: 600px) {
-    padding: 14px;
+    padding: 12px;
 
     svg {
       max-width: 240px;
@@ -52,6 +74,8 @@ export const Paper = styled.figure`
   @media print {
     border: 0;
     padding: 0;
+    /* The frame is the app's, not the code's. On paper only the code's own ground shows. */
+    background: none;
 
     svg {
       max-width: 90mm;
@@ -64,7 +88,7 @@ export const Paper = styled.figure`
 export const Placeholder = styled.div`
   aspect-ratio: 1;
   width: 100%;
-  max-width: 340px;
+  max-width: 300px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -74,7 +98,6 @@ export const Placeholder = styled.div`
   border-radius: var(--radius);
   color: var(--dim);
   font-size: var(--font-small);
-  background: var(--bg);
 
   @media (max-width: 600px) {
     max-width: 240px;
@@ -86,6 +109,9 @@ export const Meta = styled.dl`
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   margin: 0;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
 
   dt {
     font-size: var(--font-tiny);
@@ -139,9 +165,6 @@ export const SizeSelect = styled.select`
 `
 
 export const Payload = styled.details`
-  border-top: 1px solid var(--line);
-  padding-top: 12px;
-
   summary {
     font-size: var(--font-small);
     color: var(--dim);
@@ -152,14 +175,15 @@ export const Payload = styled.details`
     margin: 10px 0 0;
     padding: 10px;
     border-radius: var(--radius);
-    background: var(--surface);
+    background: var(--bg);
+    border: 1px solid var(--line);
     color: var(--text);
     font-family: var(--font-mono);
     font-size: var(--font-tiny);
     line-height: 1.6;
     white-space: pre-wrap;
     word-break: break-all;
-    max-height: 180px;
+    max-height: 160px;
     overflow: auto;
   }
 
@@ -181,7 +205,7 @@ export const Note = styled.p`
   gap: 6px;
   margin: 0;
   min-height: 20px;
-  font-size: var(--font-small);
+  font-size: var(--font-tiny);
   color: var(--dim);
 
   @media print {

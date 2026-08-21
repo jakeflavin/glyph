@@ -216,8 +216,47 @@ export const Checkbox = styled.label`
   }
 `
 
-export const Hint = styled.p`
-  margin: 0;
-  font-size: var(--font-small);
-  color: var(--dim);
+/** A labelled control with an explanation under it. The unit every panel is built from. */
+export const Field = styled.div`
+  min-width: 0;
+
+  p {
+    margin: 8px 0 0;
+    font-size: var(--font-tiny);
+    line-height: 1.5;
+    color: var(--dim);
+  }
+`
+
+/** Two controls side by side, stacking before they get too narrow to read. */
+export const Pair = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+
+  @media (max-width: 560px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+`
+
+export const RangeRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  span {
+    font-size: var(--font-small);
+    font-variant-numeric: tabular-nums;
+    color: var(--dim);
+    min-width: 2ch;
+    text-align: right;
+  }
+`
+
+export const Range = styled.input`
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--text);
+  height: 24px;
+  cursor: pointer;
 `

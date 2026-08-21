@@ -1,4 +1,13 @@
-import { COLOURS, modulesPath, spanOf, type Style } from '@/lib/render'
+import {
+  CAPTION_FONT,
+  captionLayout,
+  coloursOf,
+  dataPath,
+  eyePath,
+  logoBox,
+  viewBoxOf,
+  type Style,
+} from '@/lib/render'
 import type { Matrix } from '@/lib/matrix'
 
 export interface CodeArtProps {
@@ -11,22 +20,54 @@ export interface CodeArtProps {
 /**
  * The symbol on screen.
  *
- * The same path string that goes into the downloaded file is what renders here, so the
- * preview cannot drift from the file. It is one path rather than a rect per module: a
- * version 40 code is 31k modules, and 31k elements stutters while typing.
+ * Built from the same geometry as the downloaded file, so the preview cannot drift from
+ * what is saved. It is drawn as JSX rather than by injecting the file's own markup,
+ * because the caption is text somebody typed and React escapes it here for free.
  */
 export function CodeArt({ matrix, style, title }: CodeArtProps) {
-  const span = spanOf(matrix, style)
+  const { width, height } = viewBoxOf(matrix, style)
+  const { dark, light, eye } = coloursOf(style)
+  const logo = logoBox(matrix, style)
+  const caption = captionLayout(matrix, style)
 
   return (
     <svg
-      viewBox={`0 0 ${span} ${span}`}
+      viewBox={`0 0 ${width} ${height}`}
       role="img"
       aria-label={title}
       shapeRendering={style.shape === 'square' ? 'crispEdges' : undefined}
     >
-      <rect width={span} height={span} fill={style.invert ? COLOURS.dark : COLOURS.light} />
-      <path fill={style.invert ? COLOURS.light : COLOURS.dark} d={modulesPath(matrix, style)} />
+      <rect width={width} height={height} fill={light} />
+      <path fill={dark} d={dataPath(matrix, style)} />
+      <path fill={eye} fillRule="evenodd" d={eyePath(matrix, style)} />
+
+      {logo && style.logo && (
+        <>
+          <rect x={logo.x} y={logo.y} width={logo.size} height={logo.size} fill={light} />
+          <image
+            x={logo.x + logo.size * 0.08}
+            y={logo.y + logo.size * 0.08}
+            width={logo.size * 0.84}
+            height={logo.size * 0.84}
+            preserveAspectRatio="xMidYMid meet"
+            href={style.logo.src}
+          />
+        </>
+      )}
+
+      {caption && (
+        <text
+          x={caption.x}
+          y={caption.y}
+          fill={dark}
+          fontFamily={CAPTION_FONT}
+          fontSize={caption.fontSize}
+          fontWeight={600}
+          textAnchor="middle"
+        >
+          {caption.text}
+        </text>
+      )}
     </svg>
   )
 }
