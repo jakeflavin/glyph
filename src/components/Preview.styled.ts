@@ -59,7 +59,7 @@ export const Paper = styled.figure`
     display: block;
     width: 100%;
     height: auto;
-    max-width: 300px;
+    max-width: 340px;
     border-radius: 2px;
   }
 
@@ -88,7 +88,7 @@ export const Paper = styled.figure`
 export const Placeholder = styled.div`
   aspect-ratio: 1;
   width: 100%;
-  max-width: 300px;
+  max-width: 340px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -104,27 +104,14 @@ export const Placeholder = styled.div`
   }
 `
 
-export const Meta = styled.dl`
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+/** Version, size and recovery: worth knowing, not worth a table. */
+export const Meta = styled.p`
   margin: 0;
-  padding: 12px 0;
-  border-top: 1px solid var(--line);
+  padding-bottom: 12px;
   border-bottom: 1px solid var(--line);
-
-  dt {
-    font-size: var(--font-tiny);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--dim);
-  }
-
-  dd {
-    margin: 2px 0 0;
-    font-size: var(--font-small);
-    font-variant-numeric: tabular-nums;
-  }
+  font-size: var(--font-tiny);
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
 
   @media print {
     display: none;
@@ -148,9 +135,9 @@ export const Actions = styled.div`
   }
 `
 
-export const SizeSelect = styled.select`
+export const Select = styled.select`
   min-height: 36px;
-  padding: 0 10px;
+  padding: 0 8px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--bg);
@@ -160,7 +147,61 @@ export const SizeSelect = styled.select`
 
   ${TOUCH} {
     min-height: 44px;
+    /* Under 16px iOS zooms the whole page on focus and never zooms back out. */
     font-size: 16px;
+  }
+`
+
+/**
+ * The three things that are not downloading.
+ *
+ * Given the same weight as the download they sat beside it as three more buttons, and the
+ * panel read as eleven equal choices. They are secondary, so they look it.
+ */
+export const Quiet = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+
+  button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 28px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--dim);
+    font-size: var(--font-tiny);
+    cursor: pointer;
+  }
+
+  button:hover:not(:disabled) {
+    color: var(--text);
+    text-decoration: underline;
+  }
+
+  button:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  ${TOUCH} {
+    gap: 8px 18px;
+
+    button {
+      min-height: 44px;
+      font-size: var(--font-small);
+    }
+  }
+
+  @media print {
+    display: none;
   }
 `
 
@@ -200,12 +241,10 @@ export const Status = styled.p`
 
 /** Transient confirmation after a download or a copy. Holds its line so nothing jumps. */
 export const Note = styled.p`
-  display: flex;
-  align-items: center;
-  gap: 6px;
   margin: 0;
-  min-height: 20px;
+  min-height: 34px;
   font-size: var(--font-tiny);
+  line-height: 1.5;
   color: var(--dim);
 
   @media print {

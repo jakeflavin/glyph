@@ -85,6 +85,7 @@ export function BulkCard({ style, ecc }: BulkCardProps) {
     <Card
       title="Make many at once"
       note={items.length ? `${integer.format(items.length)} lines` : undefined}
+      foldable
     >
       <Field>
         <Label htmlFor="bulk">One code per line</Label>

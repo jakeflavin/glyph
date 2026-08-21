@@ -4,7 +4,7 @@ import type { HistoryEntry } from '@/lib/history'
 import { relativeTime } from '@/lib/relativeTime'
 import { Card } from './Card'
 import { Button } from './controls.styled'
-import { Empty, Item, List, Remove, Restore, When } from './History.styled'
+import { ClearRow, Empty, Item, List, Remove, Restore, When } from './History.styled'
 
 export interface HistoryProps {
   entries: HistoryEntry[]
@@ -29,13 +29,9 @@ export function History({ entries, now, onRestore, onRemove, onClear }: HistoryP
   return (
     <Card
       title="Recent"
-      action={
-        entries.length > 0 ? (
-          <Button type="button" onClick={onClear}>
-            Clear
-          </Button>
-        ) : undefined
-      }
+      note={entries.length > 0 ? `${entries.length} kept` : undefined}
+      foldable
+      defaultOpen={entries.length > 0}
     >
       {entries.length === 0 ? (
         <Empty>Codes you download or copy are listed here. They never leave this device.</Empty>
@@ -62,6 +58,14 @@ export function History({ entries, now, onRestore, onRemove, onClear }: HistoryP
             </Item>
           ))}
         </List>
+      )}
+
+      {entries.length > 0 && (
+        <ClearRow>
+          <Button type="button" onClick={onClear}>
+            Clear the list
+          </Button>
+        </ClearRow>
       )}
     </Card>
   )

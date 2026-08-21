@@ -62,8 +62,11 @@ Every other generator lets you style a code until it stops working and says noth
 
 ## Getting the file out
 
-SVG, PNG at four widths, JPEG, WEBP, PDF, EPS, a copy to the clipboard as an image or as
-SVG markup, or print.
+One button. The format sits in a dropdown beside it — SVG, PDF, EPS, PNG, JPEG, WEBP — and
+the line under it says what that format is and what it will drop before you click. A width
+appears only for the formats a width means anything to. Copying the image, copying the SVG
+markup and printing sit under that, quietly, because they are not what most people came to
+do.
 
 PDF and EPS are vector and 80 mm wide. The PDF carries real gradient shadings; EPS is
 PostScript Level 2 and has no gradient, so it flattens — and both leave out a logo, which
@@ -137,6 +140,18 @@ for free.
 That is what makes six formats affordable. Every shape is a rounded rectangle with four
 corner radii, so each format needs one curve routine rather than one per shape, and a new
 module shape is an entry in `shapes.ts` that all six pick up at once.
+
+## How the page is arranged
+
+The code is a sticky panel on the left, with everything that decides whether it works
+beside it: the size, whether it reads, and how to get it out. The controls are on the
+right, in three cards — what the code says, how it looks, and a folded pair for making
+many at once and for what was made earlier.
+
+The design controls are one card with five tabs rather than five cards, which is the
+difference between forty controls in a column and eight. They were five cards for one
+build, and it was the wrong call: a page that shows every control it has is not the same
+as a page that is easy to use.
 
 Conventions — layout, styling, testing — are the portfolio's, in
 [STANDARDS.md](https://github.com/jakeflavin/portfolio/blob/main/docs/STANDARDS.md).

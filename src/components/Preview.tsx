@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Check, ClipboardCopy, Copy, Download, Printer } from 'lucide-react'
+import { ClipboardCopy, Copy, Download, Printer } from 'lucide-react'
 import { ECC_RECOVERY, type Ecc, type Matrix } from '@/lib/matrix'
 import { planDrawing, type Style } from '@/lib/render'
 import { toSvg } from '@/lib/emit-svg'
@@ -7,8 +7,10 @@ import { toRasterBlob, type RasterFormat } from '@/lib/emit-raster'
 import { toEps, toPdf, vectorLoses } from '@/lib/emit-vector'
 import { measureCaption } from '@/lib/text'
 import { filenameFor, saveBlob } from '@/lib/download'
+import type { ScanResult } from '@/lib/scanCheck'
 import { Button } from './controls.styled'
 import { CodeArt } from './CodeArt'
+import { Verdict } from './Verdict'
 import {
   Actions,
   Meta,
@@ -17,7 +19,8 @@ import {
   Paper,
   Payload,
   Placeholder,
-  SizeSelect,
+  Quiet,
+  Select,
   Status,
 } from './Preview.styled'
 
@@ -25,7 +28,7 @@ import {
 const percent = new Intl.NumberFormat(undefined, { style: 'percent' })
 const integer = new Intl.NumberFormat()
 
-const PNG_SIZES: [number, ...number[]] = [512, 1024, 2048, 4096]
+const PIXEL_WIDTHS: [number, ...number[]] = [512, 1024, 2048, 4096]
 
 type Format = 'svg' | 'png' | 'jpeg' | 'webp' | 'pdf' | 'eps'
 
@@ -33,6 +36,16 @@ const RASTER: Partial<Record<Format, RasterFormat>> = {
   png: 'image/png',
   jpeg: 'image/jpeg',
   webp: 'image/webp',
+}
+
+/** What each format is for, said once, where the choice is made. */
+const ABOUT: Record<Format, string> = {
+  svg: 'Vector. Sharp at any size, and the one to send a printer.',
+  png: 'The everyday image. Keeps a transparent background.',
+  jpeg: 'Smaller, and no transparency. Only where something insists on it.',
+  webp: 'Smaller than PNG, and not every old tool opens it.',
+  pdf: 'Vector, 80 mm wide.',
+  eps: 'Vector, 80 mm wide, for older print workflows.',
 }
 
 export interface PreviewProps {
@@ -45,34 +58,49 @@ export interface PreviewProps {
   label: string
   kind: string
   error: string | null
+  check: ScanResult | null
+  checking: boolean
   /** Called when a code actually leaves the app, which is when it earns a history row. */
   onUse: () => void
 }
 
-export function Preview({ matrix, style, ecc, payload, label, kind, error, onUse }: PreviewProps) {
-  const [pngSize, setPngSize] = useState<number>(1024)
+export function Preview({
+  matrix,
+  style,
+  ecc,
+  payload,
+  label,
+  kind,
+  error,
+  check,
+  checking,
+  onUse,
+}: PreviewProps) {
+  const [format, setFormat] = useState<Format>('svg')
+  const [pixels, setPixels] = useState<number>(1024)
   const [note, setNote] = useState('')
 
   // The confirmation is a transient message, not state the rest of the app reads.
   useEffect(() => {
     if (!note) return
-    const timer = setTimeout(() => setNote(''), 2800)
+    const timer = setTimeout(() => setNote(''), 3200)
     return () => clearTimeout(timer)
   }, [note])
 
   const drawing = matrix ? planDrawing(matrix, style) : null
   const canCopy = typeof ClipboardItem !== 'undefined'
   const losses = drawing ? vectorLoses(drawing) : { pdf: [], eps: [] }
+  const isRaster = format in RASTER
 
-  const download = async (format: Format) => {
+  const onDownload = async () => {
     if (!drawing) return
     try {
-      const blob = await blobFor(format, drawing, pngSize)
+      const blob = await blobFor(format, drawing, pixels)
       saveBlob(blob, filenameFor(label, kind, format))
-      setNote(noteFor(format, pngSize, losses[format === 'eps' ? 'eps' : 'pdf']))
+      setNote(savedNote(format, pixels, format === 'eps' ? losses.eps : losses.pdf))
       onUse()
     } catch {
-      setNote('That format could not be made here. The SVG always works.')
+      setNote('That format could not be made here. SVG always works.')
     }
   }
 
@@ -119,85 +147,73 @@ export function Preview({ matrix, style, ecc, payload, label, kind, error, onUse
 
       {matrix && (
         <Meta>
-          <div>
-            <dt>Version</dt>
-            <dd>{matrix.version}</dd>
-          </div>
-          <div>
-            <dt>Modules</dt>
-            <dd>
-              {matrix.size} &times; {matrix.size}
-            </dd>
-          </div>
-          <div>
-            <dt>Recovery</dt>
-            <dd>{percent.format(ECC_RECOVERY[ecc])}</dd>
-          </div>
+          Version {matrix.version} &middot; {matrix.size} &times; {matrix.size} &middot;{' '}
+          {percent.format(ECC_RECOVERY[ecc])} recovery
         </Meta>
       )}
 
+      {matrix && <Verdict style={style} check={check} checking={checking} />}
+
       <Actions>
-        <Button $primary type="button" onClick={() => void download('svg')} disabled={!drawing}>
-          <Download aria-hidden="true" /> SVG
-        </Button>
-        <Button type="button" onClick={() => void download('png')} disabled={!drawing}>
-          <Download aria-hidden="true" /> PNG
-        </Button>
-        <SizeSelect
-          aria-label="PNG width in pixels"
-          value={pngSize}
-          onChange={(event) => setPngSize(Number(event.target.value))}
+        <Select
+          aria-label="File format"
+          value={format}
+          onChange={(event) => setFormat(event.target.value as Format)}
         >
-          {PNG_SIZES.map((size) => (
-            <option key={size} value={size}>
-              {integer.format(size)} px
-            </option>
-          ))}
-        </SizeSelect>
-      </Actions>
+          <optgroup label="Vector">
+            <option value="svg">SVG</option>
+            <option value="pdf">PDF</option>
+            <option value="eps">EPS</option>
+          </optgroup>
+          <optgroup label="Image">
+            <option value="png">PNG</option>
+            <option value="jpeg">JPEG</option>
+            <option value="webp">WEBP</option>
+          </optgroup>
+        </Select>
 
-      <Actions>
-        <Button type="button" onClick={() => void download('pdf')} disabled={!drawing}>
-          PDF
-        </Button>
-        <Button type="button" onClick={() => void download('eps')} disabled={!drawing}>
-          EPS
-        </Button>
-        <Button type="button" onClick={() => void download('jpeg')} disabled={!drawing}>
-          JPEG
-        </Button>
-        <Button type="button" onClick={() => void download('webp')} disabled={!drawing}>
-          WEBP
-        </Button>
-      </Actions>
-
-      <Actions>
-        {canCopy && (
-          <Button type="button" onClick={() => void onCopyImage()} disabled={!drawing}>
-            <Copy aria-hidden="true" /> Copy image
-          </Button>
+        {isRaster && (
+          <Select
+            aria-label="Width in pixels"
+            value={pixels}
+            onChange={(event) => setPixels(Number(event.target.value))}
+          >
+            {PIXEL_WIDTHS.map((width) => (
+              <option key={width} value={width}>
+                {integer.format(width)} px
+              </option>
+            ))}
+          </Select>
         )}
-        <Button type="button" onClick={() => void onCopyMarkup()} disabled={!drawing}>
-          <ClipboardCopy aria-hidden="true" /> Copy SVG
+
+        <Button $primary type="button" onClick={() => void onDownload()} disabled={!drawing}>
+          <Download aria-hidden="true" /> Download
         </Button>
-        <Button
+      </Actions>
+
+      <Quiet>
+        {canCopy && (
+          <button type="button" onClick={() => void onCopyImage()} disabled={!drawing}>
+            <Copy aria-hidden="true" /> Copy image
+          </button>
+        )}
+        <button type="button" onClick={() => void onCopyMarkup()} disabled={!drawing}>
+          <ClipboardCopy aria-hidden="true" /> Copy SVG
+        </button>
+        <button
           type="button"
+          disabled={!drawing}
           onClick={() => {
             onUse()
             window.print()
           }}
-          disabled={!drawing}
         >
           <Printer aria-hidden="true" /> Print
-        </Button>
-      </Actions>
+        </button>
+      </Quiet>
 
       <Note role="status">
-        {note && (
-          <>
-            <Check aria-hidden="true" size={14} /> {note}
-          </>
-        )}
+        {note || aboutFormat(format, losses[format === 'eps' ? 'eps' : 'pdf'])}
       </Note>
 
       {payload && (
@@ -215,25 +231,29 @@ async function blobFor(
   drawing: ReturnType<typeof planDrawing>,
   pixels: number,
 ): Promise<Blob> {
-  if (format === 'svg') {
-    return new Blob([toSvg(drawing)], { type: 'image/svg+xml' })
-  }
-  if (format === 'pdf') {
-    return toPdf(drawing, measureCaption(drawing))
-  }
-  if (format === 'eps') {
-    return toEps(drawing)
-  }
+  if (format === 'svg') return new Blob([toSvg(drawing)], { type: 'image/svg+xml' })
+  if (format === 'pdf') return toPdf(drawing, measureCaption(drawing))
+  if (format === 'eps') return toEps(drawing)
+
   const raster = RASTER[format]
   if (!raster) throw new Error('Unknown format')
   return toRasterBlob(drawing, pixels, raster)
 }
 
-function noteFor(format: Format, pixels: number, losses: string[]): string {
-  if (format === 'svg') return 'Saved as SVG. It stays sharp at any size.'
+/** The idle line under the buttons: what this format is, and what it will drop. */
+function aboutFormat(format: Format, losses: string[]): string {
+  const about = ABOUT[format]
+  if ((format === 'pdf' || format === 'eps') && losses.length > 0) {
+    return `${about} Leaves out ${losses.join(' and ')}.`
+  }
+  return about
+}
+
+function savedNote(format: Format, pixels: number, losses: string[]): string {
   if (format === 'pdf' || format === 'eps') {
     const kept = `Saved as ${format.toUpperCase()}, 80 mm wide and vector.`
     return losses.length ? `${kept} It leaves out ${losses.join(' and ')}.` : kept
   }
+  if (format === 'svg') return 'Saved as SVG. It stays sharp at any size.'
   return `Saved as ${format.toUpperCase()}, ${integer.format(pixels)} pixels across.`
 }

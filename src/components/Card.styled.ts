@@ -1,4 +1,5 @@
 import styled from 'styled-components'
+import { TOUCH } from './controls.styled'
 
 export const Section = styled.section`
   border: 1px solid var(--line);
@@ -54,4 +55,41 @@ export const Body = styled.div`
   display: flex;
   flex-direction: column;
   gap: 18px;
+
+  details > & {
+    margin-top: 16px;
+  }
+`
+
+/** A foldable card's header. The marker is the chevron below, not the browser's own. */
+export const Summary = styled.summary`
+  list-style: none;
+  cursor: pointer;
+
+  &::-webkit-details-marker {
+    display: none;
+  }
+
+  details[open] > & svg {
+    transform: rotate(90deg);
+  }
+`
+
+export const Toggle = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 20px;
+
+  svg {
+    width: 14px;
+    height: 14px;
+    flex: none;
+    color: var(--dim);
+    transition: transform 120ms ease;
+  }
+
+  ${TOUCH} {
+    min-height: 32px;
+  }
 `

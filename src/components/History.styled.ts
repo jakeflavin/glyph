@@ -97,3 +97,8 @@ export const Remove = styled.button`
     height: 44px;
   }
 `
+
+export const ClearRow = styled.div`
+  display: flex;
+  justify-content: flex-end;
+`

@@ -3,14 +3,9 @@ import { Header } from './components/Header'
 import { KindTabs } from './components/KindTabs'
 import { ContentForm } from './components/ContentForm'
 import { Card } from './components/Card'
-import { ColourControls } from './components/ColourControls'
-import { ShapeControls } from './components/ShapeControls'
-import { LogoControls } from './components/LogoControls'
-import { FrameControls } from './components/FrameControls'
-import { ScanControls } from './components/ScanControls'
+import { DesignCard } from './components/DesignCard'
 import { Preview } from './components/Preview'
 import { BulkCard } from './components/BulkCard'
-import { TemplateCard } from './components/TemplateCard'
 import { History } from './components/History'
 import { ConfirmDialog } from './components/ConfirmDialog'
 import { Columns, Controls, Foot, Page } from './App.styled'
@@ -31,7 +26,7 @@ import {
   type KindId,
 } from './lib/payloads'
 import { addEntry, removeEntry, type HistoryEntry } from './lib/history'
-import { removeTemplate, type Template } from './lib/templates'
+import type { Template } from './lib/templates'
 
 export function App() {
   const { theme, setTheme } = useTheme()
@@ -142,6 +137,8 @@ export function App() {
           label={label}
           kind={kind}
           error={error}
+          check={supported ? (checked?.result ?? null) : 'unsupported'}
+          checking={checking}
           onUse={onUse}
         />
 
@@ -153,39 +150,13 @@ export function App() {
             </div>
           </Card>
 
-          <Card title="Colour">
-            <ColourControls style={style} onStyle={setStyle} />
-          </Card>
-
-          <Card title="Shape">
-            <ShapeControls style={style} onStyle={setStyle} />
-          </Card>
-
-          <Card title="Logo">
-            <LogoControls style={style} correctionIsHighest={ecc === 'H'} onStyle={setStyle} />
-          </Card>
-
-          <Card title="Frame and caption">
-            <FrameControls style={style} onStyle={setStyle} />
-          </Card>
-
-          <Card title="Scanning">
-            <ScanControls
-              ecc={ecc}
-              style={style}
-              check={supported ? (checked?.result ?? null) : 'unsupported'}
-              checking={checking}
-              onEcc={setEcc}
-              onStyle={setStyle}
-            />
-          </Card>
-
-          <TemplateCard
-            templates={templates}
+          <DesignCard
             style={style}
-            onSave={setTemplates}
-            onApply={setStyle}
-            onRemove={(id) => setTemplates((entries) => removeTemplate(entries, id))}
+            ecc={ecc}
+            templates={templates}
+            onStyle={setStyle}
+            onEcc={setEcc}
+            onTemplates={setTemplates}
           />
 
           <BulkCard style={style} ecc={ecc} />
