@@ -127,7 +127,7 @@ export function App() {
               style={style}
               correctionIsHighest={ecc === 'H'}
               onStyle={setStyle}
-              onCaption={(caption) => setStyle({ ...style, caption })}
+              onCaption={(caption) => setStyle((current) => ({ ...current, caption }))}
             />
           </Card>
 

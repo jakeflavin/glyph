@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, type Dispatch, type SetStateAction } from 'react'
 import { ImagePlus, Trash2 } from 'lucide-react'
 import { ACCEPTED_IMAGE_TYPES, readLogoFile } from '@/lib/image'
 import type { Style } from '@/lib/render'
@@ -16,7 +16,7 @@ export interface LogoControlsProps {
   style: Style
   /** Shown as a warning, since a logo without it is a code that may not read. */
   correctionIsHighest: boolean
-  onStyle: (style: Style) => void
+  onStyle: Dispatch<SetStateAction<Style>>
   onCaption: (caption: string) => void
 }
 
@@ -34,7 +34,7 @@ export function LogoControls({
     setError('')
     try {
       const src = await readLogoFile(file)
-      onStyle({ ...style, logo: { src, scale: style.logo?.scale ?? 0.2 } })
+      onStyle((current) => ({ ...current, logo: { src, scale: current.logo?.scale ?? 0.2 } }))
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'That image could not be read.')
     }
@@ -52,7 +52,11 @@ export function LogoControls({
             <ImagePlus aria-hidden="true" /> {style.logo ? 'Replace' : 'Add an image'}
           </Button>
           {style.logo && (
-            <Button type="button" $danger onClick={() => onStyle({ ...style, logo: null })}>
+            <Button
+              type="button"
+              $danger
+              onClick={() => onStyle((current) => ({ ...current, logo: null }))}
+            >
               <Trash2 aria-hidden="true" /> Remove
             </Button>
           )}
@@ -90,10 +94,13 @@ export function LogoControls({
               step={1}
               value={Math.round(style.logo.scale * 100)}
               onChange={(event) =>
-                onStyle({
-                  ...style,
-                  logo: { src: style.logo?.src ?? '', scale: Number(event.target.value) / 100 },
-                })
+                onStyle((current) => ({
+                  ...current,
+                  logo: current.logo && {
+                    ...current.logo,
+                    scale: Number(event.target.value) / 100,
+                  },
+                }))
               }
             />
             <span>{percent.format(style.logo.scale)}</span>

@@ -1,3 +1,4 @@
+import type { Dispatch, SetStateAction } from 'react'
 import { isLightOnDark, verdictFor } from '@/lib/colors'
 import { ECC_LEVELS, type Ecc } from '@/lib/matrix'
 import type { Style } from '@/lib/render'
@@ -21,7 +22,7 @@ export interface ScanControlsProps {
   ecc: Ecc
   style: Style
   onEcc: (ecc: Ecc) => void
-  onStyle: (style: Style) => void
+  onStyle: Dispatch<SetStateAction<Style>>
 }
 
 /** The two settings that decide whether the thing reads, and the check on the colours. */
@@ -61,7 +62,9 @@ export function ScanControls({ ecc, style, onEcc, onStyle }: ScanControlsProps) 
               max={8}
               step={1}
               value={style.margin}
-              onChange={(event) => onStyle({ ...style, margin: Number(event.target.value) })}
+              onChange={(event) =>
+                onStyle((current) => ({ ...current, margin: Number(event.target.value) }))
+              }
             />
             <span>{style.margin}</span>
           </RangeRow>

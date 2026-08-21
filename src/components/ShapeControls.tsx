@@ -1,3 +1,4 @@
+import type { Dispatch, SetStateAction } from 'react'
 import type { EyeShape, Shape, Style } from '@/lib/render'
 import { Field, Label, Pair, Segmented } from './controls.styled'
 
@@ -15,7 +16,7 @@ const EYE_SHAPES: [{ id: EyeShape; label: string }, ...{ id: EyeShape; label: st
 
 export interface ShapeControlsProps {
   style: Style
-  onStyle: (style: Style) => void
+  onStyle: Dispatch<SetStateAction<Style>>
 }
 
 export function ShapeControls({ style, onStyle }: ShapeControlsProps) {
@@ -31,7 +32,7 @@ export function ShapeControls({ style, onStyle }: ShapeControlsProps) {
               key={shape.id}
               type="button"
               aria-pressed={shape.id === style.shape}
-              onClick={() => onStyle({ ...style, shape: shape.id })}
+              onClick={() => onStyle((current) => ({ ...current, shape: shape.id }))}
             >
               {shape.label}
             </button>
@@ -50,7 +51,7 @@ export function ShapeControls({ style, onStyle }: ShapeControlsProps) {
               key={shape.id}
               type="button"
               aria-pressed={shape.id === style.eyeShape}
-              onClick={() => onStyle({ ...style, eyeShape: shape.id })}
+              onClick={() => onStyle((current) => ({ ...current, eyeShape: shape.id }))}
             >
               {shape.label}
             </button>

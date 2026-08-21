@@ -1,3 +1,4 @@
+import type { Dispatch, SetStateAction } from 'react'
 import { ArrowLeftRight } from 'lucide-react'
 import { PALETTES } from '@/lib/colors'
 import type { Style } from '@/lib/render'
@@ -6,7 +7,14 @@ import { Row, Swatch, SwatchRow, Well } from './ColourControls.styled'
 
 export interface ColourControlsProps {
   style: Style
-  onStyle: (style: Style) => void
+  /**
+   * An updater rather than a value, in every panel that writes to the style.
+   *
+   * Two of these controls can be driven in one tick — by a test, by a script, by a
+   * keyboard repeat — and a handler built from a value would write a style it read
+   * before the other one landed, silently dropping it.
+   */
+  onStyle: Dispatch<SetStateAction<Style>>
 }
 
 /**
@@ -35,7 +43,9 @@ export function ColourControls({ style, onStyle }: ColourControlsProps) {
                 aria-pressed={chosen}
                 $dark={palette.dark}
                 $light={palette.light}
-                onClick={() => onStyle({ ...style, dark: palette.dark, light: palette.light })}
+                onClick={() =>
+                  onStyle((current) => ({ ...current, dark: palette.dark, light: palette.light }))
+                }
               >
                 <span aria-hidden="true" />
                 {palette.label}
@@ -53,7 +63,7 @@ export function ColourControls({ style, onStyle }: ColourControlsProps) {
               id="colour-dark"
               type="color"
               value={style.dark}
-              onChange={(event) => onStyle({ ...style, dark: event.target.value })}
+              onChange={(event) => onStyle((current) => ({ ...current, dark: event.target.value }))}
             />
             <output>{style.dark.toUpperCase()}</output>
           </Well>
@@ -66,7 +76,9 @@ export function ColourControls({ style, onStyle }: ColourControlsProps) {
               id="colour-light"
               type="color"
               value={style.light}
-              onChange={(event) => onStyle({ ...style, light: event.target.value })}
+              onChange={(event) =>
+                onStyle((current) => ({ ...current, light: event.target.value }))
+              }
             />
             <output>{style.light.toUpperCase()}</output>
           </Well>
@@ -82,14 +94,16 @@ export function ColourControls({ style, onStyle }: ColourControlsProps) {
               type="color"
               value={style.eye ?? style.dark}
               disabled={eyeFollows}
-              onChange={(event) => onStyle({ ...style, eye: event.target.value })}
+              onChange={(event) => onStyle((current) => ({ ...current, eye: event.target.value }))}
             />
             <output>{(style.eye ?? style.dark).toUpperCase()}</output>
           </Well>
           <Button
             type="button"
             aria-pressed={!eyeFollows}
-            onClick={() => onStyle({ ...style, eye: eyeFollows ? style.dark : null })}
+            onClick={() =>
+              onStyle((current) => ({ ...current, eye: eyeFollows ? current.dark : null }))
+            }
           >
             {eyeFollows ? 'Colour separately' : 'Match the code'}
           </Button>
@@ -100,7 +114,9 @@ export function ColourControls({ style, onStyle }: ColourControlsProps) {
       <Row>
         <Button
           type="button"
-          onClick={() => onStyle({ ...style, dark: style.light, light: style.dark })}
+          onClick={() =>
+            onStyle((current) => ({ ...current, dark: current.light, light: current.dark }))
+          }
         >
           <ArrowLeftRight aria-hidden="true" /> Swap the two
         </Button>
