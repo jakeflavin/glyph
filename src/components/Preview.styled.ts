@@ -207,9 +207,18 @@ export const Quiet = styled.div`
 
 export const Payload = styled.details`
   summary {
+    display: flex;
+    align-items: center;
+    min-height: 24px;
     font-size: var(--font-small);
     color: var(--dim);
     cursor: pointer;
+  }
+
+  ${TOUCH} {
+    summary {
+      min-height: 44px;
+    }
   }
 
   pre {

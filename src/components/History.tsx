@@ -62,8 +62,11 @@ export function History({ entries, now, onRestore, onRemove, onClear }: HistoryP
 
       {entries.length > 0 && (
         <ClearRow>
-          <Button type="button" onClick={onClear}>
-            Clear the list
+          {/* Named apart from the dialog's own confirm button: by name alone — a screen
+              reader, a voice command — two buttons called "Clear the list" are the same
+              button, and one of them is the irreversible one. */}
+          <Button type="button" aria-label="Clear recent codes" onClick={onClear}>
+            Clear
           </Button>
         </ClearRow>
       )}

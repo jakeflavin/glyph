@@ -90,6 +90,6 @@ export const Toggle = styled.div`
   }
 
   ${TOUCH} {
-    min-height: 32px;
+    min-height: 44px;
   }
 `

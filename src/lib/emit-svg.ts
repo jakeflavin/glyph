@@ -140,10 +140,11 @@ export function toSvg(drawing: Drawing, pixels?: number): string {
   }
 
   const scale = pixels ? ` width="${pixels}" height="${n((pixels * height) / width)}"` : ''
+  const crisp = drawing.crisp ? ' shape-rendering="crispEdges"' : ''
   const declarations = [...paints.defs, ...defs]
 
   return [
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n(width)} ${n(height)}"${scale}>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n(width)} ${n(height)}"${scale}${crisp}>`,
     declarations.length ? `<defs>${declarations.join('')}</defs>` : '',
     ...body,
     '</svg>',

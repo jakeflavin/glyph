@@ -5,7 +5,6 @@ export interface CodeArtProps {
   drawing: Drawing
   /** Read out to anyone who cannot see the code, since the image itself says nothing. */
   title: string
-  crisp: boolean
 }
 
 /**
@@ -15,7 +14,7 @@ export interface CodeArtProps {
  * what is saved. It is JSX rather than the SVG file's own markup injected wholesale,
  * because the caption is text somebody typed and React escapes it here for free.
  */
-export function CodeArt({ drawing, title, crisp }: CodeArtProps) {
+export function CodeArt({ drawing, title }: CodeArtProps) {
   const { width, height } = drawing
   const paints = paintRegistry(width)
 
@@ -32,7 +31,7 @@ export function CodeArt({ drawing, title, crisp }: CodeArtProps) {
       viewBox={`0 0 ${width} ${height}`}
       role="img"
       aria-label={title}
-      shapeRendering={crisp ? 'crispEdges' : undefined}
+      shapeRendering={drawing.crisp ? 'crispEdges' : undefined}
     >
       {/*
         Gradient definitions, built entirely from numbers and colours this app generated.

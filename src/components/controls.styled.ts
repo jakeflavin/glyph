@@ -253,10 +253,22 @@ export const RangeRow = styled.div`
   }
 `
 
+/**
+ * A slider.
+ *
+ * The height is the hit area: a pointer anywhere in the box starts a drag, so the whole
+ * band is the target rather than the thumb. Left native otherwise — taking over the
+ * appearance to enlarge the thumb means rebuilding the filled track by hand, and
+ * `accent-color` already draws it correctly in both themes.
+ */
 export const Range = styled.input`
   flex: 1;
   min-width: 0;
   accent-color: var(--text);
   height: 24px;
   cursor: pointer;
+
+  ${TOUCH} {
+    height: 44px;
+  }
 `

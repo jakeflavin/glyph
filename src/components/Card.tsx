@@ -1,4 +1,4 @@
-import { useId, type ReactNode } from 'react'
+import { useId, useState, type ReactNode } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { Body, Head, Note, Section, Summary, Title, Toggle } from './Card.styled'
 
@@ -15,6 +15,7 @@ export interface CardProps {
    * page is actually for.
    */
   foldable?: boolean
+  /** Read once, when the card mounts. After that the fold is the reader's. */
   defaultOpen?: boolean
   children: ReactNode
 }
@@ -28,9 +29,26 @@ export interface CardProps {
 export function Card({ title, note, action, foldable, defaultOpen, children }: CardProps) {
   const id = useId()
 
+  /*
+   * Seeded from `defaultOpen` and owned by the reader from then on.
+   *
+   * Driven straight from the prop, a card whose `defaultOpen` was derived from its own
+   * contents closed itself the moment those contents went — so clearing a list folded the
+   * card that was showing it, and the only acknowledgement of a destructive action was the
+   * disappearance of the thing you acted on.
+   */
+  const [open, setOpen] = useState(defaultOpen ?? false)
+
   if (foldable) {
     return (
-      <Section as="details" aria-label={title} open={defaultOpen}>
+      <Section
+        as="details"
+        aria-label={title}
+        open={open}
+        onToggle={(event: React.SyntheticEvent<HTMLDetailsElement>) =>
+          setOpen(event.currentTarget.open)
+        }
+      >
         <Summary>
           <Toggle>
             <ChevronRight aria-hidden="true" />

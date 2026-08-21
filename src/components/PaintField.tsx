@@ -85,6 +85,8 @@ export function PaintField({ id, label, paint, onChange, hint, follow }: PaintFi
             <button
               key={type.id}
               type="button"
+              // Four of these on one screen, all reading "Flat / Linear / Radial".
+              aria-label={`${label}: ${type.label}`}
               aria-pressed={paint.type === type.id}
               disabled={disabled}
               onClick={() => retype(type.id)}

@@ -109,6 +109,14 @@ export interface CaptionPlan {
 export interface Drawing {
   width: number
   height: number
+  /**
+   * Whether to ask the renderer not to anti-alias.
+   *
+   * It lives on the drawing rather than being passed to each renderer, because the file
+   * and the preview both have to make the same call — and when it was a prop on the
+   * preview only, the downloaded SVG quietly lost it.
+   */
+  crisp: boolean
   background: { paint: Paint; round: number } | null
   layers: Layer[]
   logo: { src: string; x: number; y: number; size: number; round: boolean } | null
@@ -307,6 +315,7 @@ export function planDrawing(matrix: Matrix, style: Style): Drawing {
   return {
     width,
     height,
+    crisp: style.module === 'square',
     background: style.transparent
       ? null
       : { paint: style.background, round: Math.max(0, Math.min(0.5, cardRound)) },

@@ -83,6 +83,16 @@ describe('planDrawing', () => {
     expect(painted.layers[2]?.paint).toEqual(solid('#ff0000'))
   })
 
+  /*
+   * The drawing decides this, not the renderer that happens to be drawing it. When the
+   * preview owned the flag, the downloaded SVG silently stopped asking for crisp edges.
+   */
+  it('asks for crisp edges only where the modules have edges to keep', () => {
+    expect(planDrawing(matrixOf('hello'), BASE).crisp).toBe(true)
+    expect(planDrawing(matrixOf('hello'), { ...BASE, module: 'dot' }).crisp).toBe(false)
+    expect(planDrawing(matrixOf('hello'), { ...BASE, module: 'rounded' }).crisp).toBe(false)
+  })
+
   it('has no background at all when the code is transparent', () => {
     expect(planDrawing(matrixOf('hello'), { ...BASE, transparent: true }).background).toBeNull()
   })
@@ -195,6 +205,12 @@ describe('toSvg', () => {
     const svg = toSvg(planDrawing(matrixOf('hello'), withCaption(BASE, 'Tom & "Jo" <b>')))
     expect(svg).toContain('Tom &amp; &quot;Jo&quot; &lt;b&gt;')
     expect(svg).not.toContain('<b>')
+  })
+
+  it('carries the crisp-edges request into the file, not only into the preview', () => {
+    const matrix = matrixOf('hello')
+    expect(toSvg(planDrawing(matrix, BASE))).toContain('shape-rendering="crispEdges"')
+    expect(toSvg(planDrawing(matrix, { ...BASE, module: 'dot' }))).not.toContain('shape-rendering')
   })
 
   it('takes a pixel width for a file, and none for the preview', () => {

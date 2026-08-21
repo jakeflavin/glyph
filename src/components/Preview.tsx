@@ -131,11 +131,7 @@ export function Preview({
     <Panel aria-label="The code">
       <Paper>
         {drawing ? (
-          <CodeArt
-            drawing={drawing}
-            crisp={style.module === 'square'}
-            title={`QR code for ${label || kind}`}
-          />
+          <CodeArt drawing={drawing} title={`QR code for ${label || kind}`} />
         ) : (
           <Placeholder>
             {error ? 'Nothing to draw yet.' : 'Fill in the form and the code appears here.'}
@@ -145,82 +141,91 @@ export function Preview({
 
       {error && <Status role="alert">{error}</Status>}
 
-      {matrix && (
-        <Meta>
-          Version {matrix.version} &middot; {matrix.size} &times; {matrix.size} &middot;{' '}
-          {percent.format(ECC_RECOVERY[ecc])} recovery
-        </Meta>
-      )}
+      {/*
+        Nothing below exists until there is a code. Shown for an empty screen it is a
+        format dropdown, a download button and three actions for a file that cannot be
+        made — the heaviest thing on a first visit, all of it disabled.
+      */}
+      {drawing && (
+        <>
+          <Meta>
+            Version {matrix?.version} &middot; {matrix?.size} &times; {matrix?.size} &middot;{' '}
+            {percent.format(ECC_RECOVERY[ecc])} recovery
+          </Meta>
 
-      {matrix && <Verdict style={style} check={check} checking={checking} />}
+          <Verdict style={style} check={check} checking={checking} />
 
-      <Actions>
-        <Select
-          aria-label="File format"
-          value={format}
-          onChange={(event) => setFormat(event.target.value as Format)}
-        >
-          <optgroup label="Vector">
-            <option value="svg">SVG</option>
-            <option value="pdf">PDF</option>
-            <option value="eps">EPS</option>
-          </optgroup>
-          <optgroup label="Image">
-            <option value="png">PNG</option>
-            <option value="jpeg">JPEG</option>
-            <option value="webp">WEBP</option>
-          </optgroup>
-        </Select>
+          <Actions>
+            <Select
+              aria-label="File format"
+              value={format}
+              onChange={(event) => {
+                setFormat(event.target.value as Format)
+                // The line below does double duty, and a confirmation of the last save
+                // would otherwise describe the wrong format for another three seconds.
+                setNote('')
+              }}
+            >
+              <optgroup label="Vector">
+                <option value="svg">SVG</option>
+                <option value="pdf">PDF</option>
+                <option value="eps">EPS</option>
+              </optgroup>
+              <optgroup label="Image">
+                <option value="png">PNG</option>
+                <option value="jpeg">JPEG</option>
+                <option value="webp">WEBP</option>
+              </optgroup>
+            </Select>
 
-        {isRaster && (
-          <Select
-            aria-label="Width in pixels"
-            value={pixels}
-            onChange={(event) => setPixels(Number(event.target.value))}
-          >
-            {PIXEL_WIDTHS.map((width) => (
-              <option key={width} value={width}>
-                {integer.format(width)} px
-              </option>
-            ))}
-          </Select>
-        )}
+            {isRaster && (
+              <Select
+                aria-label="Width in pixels"
+                value={pixels}
+                onChange={(event) => setPixels(Number(event.target.value))}
+              >
+                {PIXEL_WIDTHS.map((width) => (
+                  <option key={width} value={width}>
+                    {integer.format(width)} px
+                  </option>
+                ))}
+              </Select>
+            )}
 
-        <Button $primary type="button" onClick={() => void onDownload()} disabled={!drawing}>
-          <Download aria-hidden="true" /> Download
-        </Button>
-      </Actions>
+            <Button $primary type="button" onClick={() => void onDownload()}>
+              <Download aria-hidden="true" /> Download
+            </Button>
+          </Actions>
 
-      <Quiet>
-        {canCopy && (
-          <button type="button" onClick={() => void onCopyImage()} disabled={!drawing}>
-            <Copy aria-hidden="true" /> Copy image
-          </button>
-        )}
-        <button type="button" onClick={() => void onCopyMarkup()} disabled={!drawing}>
-          <ClipboardCopy aria-hidden="true" /> Copy SVG
-        </button>
-        <button
-          type="button"
-          disabled={!drawing}
-          onClick={() => {
-            onUse()
-            window.print()
-          }}
-        >
-          <Printer aria-hidden="true" /> Print
-        </button>
-      </Quiet>
+          <Quiet>
+            {canCopy && (
+              <button type="button" onClick={() => void onCopyImage()}>
+                <Copy aria-hidden="true" /> Copy image
+              </button>
+            )}
+            <button type="button" onClick={() => void onCopyMarkup()}>
+              <ClipboardCopy aria-hidden="true" /> Copy SVG
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onUse()
+                window.print()
+              }}
+            >
+              <Printer aria-hidden="true" /> Print
+            </button>
+          </Quiet>
 
-      <Note role="status">
-        {note || aboutFormat(format, losses[format === 'eps' ? 'eps' : 'pdf'])}
-      </Note>
+          <Note role="status">
+            {note || aboutFormat(format, losses[format === 'eps' ? 'eps' : 'pdf'])}
+          </Note>
 
-      {payload && (
-        <Payload>
-          <summary>What is inside the code</summary>
-          <pre>{payload}</pre>
-        </Payload>
+          <Payload>
+            <summary>What is inside the code</summary>
+            <pre>{payload}</pre>
+          </Payload>
+        </>
       )}
     </Panel>
   )

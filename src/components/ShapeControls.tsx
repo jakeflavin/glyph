@@ -29,6 +29,10 @@ export interface ShapeControlsProps {
  * The samples are drawn with the same functions that draw the code, so a tile cannot show
  * something the renderer does not produce — which a hand-drawn icon set would, the first
  * time a shape changed.
+ *
+ * Three rows share one vocabulary, so "Square" appears three times over. Each tile carries
+ * the group in its accessible name — "Square corner frame" — which keeps the words on
+ * screen short while making the names distinct for anyone reading them in a list.
  */
 export function ShapeControls({ style, onStyle }: ShapeControlsProps) {
   const set = (patch: Partial<Style>) => onStyle((current) => ({ ...current, ...patch }))
@@ -44,6 +48,7 @@ export function ShapeControls({ style, onStyle }: ShapeControlsProps) {
             <Tile
               key={shape.id}
               type="button"
+              aria-label={`${shape.label} modules`}
               aria-pressed={shape.id === style.module}
               onClick={() => set({ module: shape.id })}
             >
@@ -66,6 +71,7 @@ export function ShapeControls({ style, onStyle }: ShapeControlsProps) {
             <Tile
               key={shape.id}
               type="button"
+              aria-label={`${shape.label} corner frame`}
               aria-pressed={shape.id === style.eyeFrame}
               onClick={() => set({ eyeFrame: shape.id })}
             >
@@ -87,6 +93,7 @@ export function ShapeControls({ style, onStyle }: ShapeControlsProps) {
             <Tile
               key={shape.id}
               type="button"
+              aria-label={`${shape.label} corner centre`}
               aria-pressed={shape.id === style.eyeBall}
               onClick={() => set({ eyeBall: shape.id })}
             >

@@ -9,7 +9,9 @@ export const TabRow = styled.div`
   /* A grid rather than a wrapping flex row: wrapped, the last tab on its own line
      stretched the full width and read as a heading rather than as a tab. */
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+  /* 88px gives five across on a desktop card and three at 320, where two columns left
+     the fifth tab alone on a row of its own, reading as a heading rather than a tab. */
+  grid-template-columns: repeat(auto-fit, minmax(82px, 1fr));
   gap: 2px;
   margin: -4px -4px 16px;
   padding: 4px;
@@ -20,7 +22,7 @@ export const TabRow = styled.div`
 export const Tab = styled.button<{ $active: boolean }>`
   appearance: none;
   min-height: 32px;
-  padding: 0 12px;
+  padding: 0 8px;
   border: 0;
   border-radius: calc(var(--radius) - 2px);
   background: none;
