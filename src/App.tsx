@@ -14,7 +14,7 @@ import { Columns, Controls, Foot, Page } from './App.styled'
 import { usePersistentState } from './hooks/usePersistentState'
 import { useTheme } from './hooks/useTheme'
 import { buildMatrix, type Ecc } from './lib/matrix'
-import type { Style } from './lib/render'
+import { DEFAULT_STYLE, readDraft, readStyle } from './lib/settings'
 import {
   EMPTY_DRAFT,
   KINDS,
@@ -26,65 +26,14 @@ import {
 } from './lib/payloads'
 import { addEntry, removeEntry, type HistoryEntry } from './lib/history'
 
-const DEFAULT_STYLE: Style = {
-  shape: 'square',
-  eyeShape: 'square',
-  margin: 4,
-  dark: '#000000',
-  light: '#ffffff',
-  eye: null,
-  logo: null,
-  caption: '',
-}
-
-/**
- * A draft written by an older build is missing whatever fields have been added since, and
- * every field is read as a controlled input's value — so the stored object is merged into
- * the empty one rather than trusted whole.
- */
-function readDraft(raw: string | null): Draft {
-  if (!raw) return EMPTY_DRAFT
-  try {
-    const stored = JSON.parse(raw) as Partial<Draft>
-    const merged = { ...EMPTY_DRAFT }
-    for (const kind of KINDS) {
-      const saved = stored[kind.id]
-      if (saved) Object.assign(merged[kind.id], saved)
-    }
-    return merged
-  } catch {
-    return EMPTY_DRAFT
-  }
-}
-
-/**
- * The same merge for the appearance, plus one migration: the first build had a single
- * `invert` flag where there are now two colours, and a stored `true` means the pair was
- * the other way round.
- */
-function readStyle(raw: string | null): Style {
-  if (!raw) return DEFAULT_STYLE
-  try {
-    const stored = JSON.parse(raw) as Partial<Style> & { invert?: boolean }
-    const merged: Style = { ...DEFAULT_STYLE, ...stored }
-    if (stored.invert && !stored.dark) {
-      merged.dark = DEFAULT_STYLE.light
-      merged.light = DEFAULT_STYLE.dark
-    }
-    return merged
-  } catch {
-    return DEFAULT_STYLE
-  }
-}
-
 export function App() {
   const { theme, setTheme } = useTheme()
   const [kind, setKind] = usePersistentState<KindId>('glyph.kind', 'link')
-  const [draft, setDraft] = usePersistentState<Draft>('glyph.draft', EMPTY_DRAFT, {
+  const [draft, setDraft] = usePersistentState('glyph.draft', EMPTY_DRAFT, {
     read: readDraft,
   })
   const [ecc, setEcc] = usePersistentState<Ecc>('glyph.ecc', 'M')
-  const [style, setStyle] = usePersistentState<Style>('glyph.style', DEFAULT_STYLE, {
+  const [style, setStyle] = usePersistentState('glyph.style', DEFAULT_STYLE, {
     read: readStyle,
   })
   const [history, setHistory] = usePersistentState<HistoryEntry[]>('glyph.history', [])
