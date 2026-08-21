@@ -16,8 +16,12 @@ export interface Palette {
 }
 
 /**
- * The presets. Every pair clears 7:1, which leaves room for a phone camera, a cheap
- * printer and a shop window between them.
+ * The presets. Every pair clears 7:1 against its ground, which leaves room for a phone
+ * camera, a cheap printer and a shop window between them.
+ *
+ * A gradient is two colours and either end can be the one that fails, so the two-colour
+ * presets below are held to the same bar at *both* ends. The app's own check caught the
+ * first attempt at Pine, whose light end sat at 6.3 on white.
  */
 export const PALETTES: [Palette, ...Palette[]] = [
   { id: 'mono', label: 'Black', dark: '#000000', light: '#ffffff' },
@@ -26,6 +30,22 @@ export const PALETTES: [Palette, ...Palette[]] = [
   { id: 'wine', label: 'Wine', dark: '#5c1024', light: '#ffffff' },
   { id: 'cream', label: 'Cream', dark: '#1c1a17', light: '#f6efe2' },
   { id: 'night', label: 'Night', dark: '#f2f2f2', light: '#101010' },
+]
+
+/** Pairs that only make sense as a gradient, so the presets can offer one at all. */
+export interface GradientPalette {
+  id: string
+  label: string
+  from: string
+  to: string
+  /** Radial has no angle; a linear one is degrees clockwise from left to right. */
+  angle: number | null
+}
+
+export const GRADIENT_PALETTES: [GradientPalette, ...GradientPalette[]] = [
+  { id: 'dusk', label: 'Dusk', from: '#2b1b6b', to: '#8a1c4f', angle: 45 },
+  { id: 'pine', label: 'Pine', from: '#0b3d2e', to: '#14523a', angle: 90 },
+  { id: 'ember', label: 'Ember', from: '#7a1f12', to: '#2b0d08', angle: null },
 ]
 
 /** `#rgb` and `#rrggbb`, upper or lower case, to three 0-255 channels. */

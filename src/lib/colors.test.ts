@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  GRADIENT_PALETTES,
   PALETTES,
   contrastRatio,
   isLightOnDark,
@@ -50,6 +51,21 @@ describe('verdictFor', () => {
         id: palette.id,
         verdict: 'good',
       })
+    }
+  })
+
+  it('passes both ends of every gradient preset, since either end can be the one that fails', () => {
+    for (const palette of GRADIENT_PALETTES) {
+      for (const [end, colour] of [
+        ['from', palette.from],
+        ['to', palette.to],
+      ] as const) {
+        expect({ id: palette.id, end, verdict: verdictFor(colour, '#ffffff') }).toEqual({
+          id: palette.id,
+          end,
+          verdict: 'good',
+        })
+      }
     }
   })
 

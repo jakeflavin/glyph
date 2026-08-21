@@ -1,6 +1,6 @@
 import type { Dispatch, SetStateAction } from 'react'
 import { ArrowLeftRight } from 'lucide-react'
-import { PALETTES } from '@/lib/colors'
+import { GRADIENT_PALETTES, PALETTES } from '@/lib/colors'
 import { solid, toCss, type Paint } from '@/lib/paint'
 import type { Style } from '@/lib/render'
 import { Button, Checkbox, Field, Label, Pair, Range, RangeRow } from './controls.styled'
@@ -62,18 +62,24 @@ export function ColourControls({ style, onStyle }: ColourControlsProps) {
               </Preset>
             )
           })}
-          {GRADIENT_PRESETS.map((preset) => (
-            <Preset
-              key={preset.id}
-              type="button"
-              aria-pressed={toCss(style.paint) === toCss(preset.paint)}
-              $css={toCss(preset.paint)}
-              onClick={() => set({ paint: preset.paint, background: solid('#ffffff') })}
-            >
-              <span aria-hidden="true" />
-              {preset.label}
-            </Preset>
-          ))}
+          {GRADIENT_PALETTES.map((palette) => {
+            const paint: Paint =
+              palette.angle === null
+                ? { type: 'radial', from: palette.from, to: palette.to }
+                : { type: 'linear', from: palette.from, to: palette.to, angle: palette.angle }
+            return (
+              <Preset
+                key={palette.id}
+                type="button"
+                aria-pressed={toCss(style.paint) === toCss(paint)}
+                $css={toCss(paint)}
+                onClick={() => set({ paint, background: solid('#ffffff') })}
+              >
+                <span aria-hidden="true" />
+                {palette.label}
+              </Preset>
+            )
+          })}
         </PresetRow>
       </Field>
 
@@ -139,18 +145,3 @@ export function ColourControls({ style, onStyle }: ColourControlsProps) {
     </>
   )
 }
-
-/** Pairs that only make sense as gradients, so the presets can offer one at all. */
-const GRADIENT_PRESETS: { id: string; label: string; paint: Paint }[] = [
-  {
-    id: 'dusk',
-    label: 'Dusk',
-    paint: { type: 'linear', from: '#2b1b6b', to: '#8a1c4f', angle: 45 },
-  },
-  {
-    id: 'pine',
-    label: 'Pine',
-    paint: { type: 'linear', from: '#0b3d2e', to: '#1d6b4f', angle: 90 },
-  },
-  { id: 'ember', label: 'Ember', paint: { type: 'radial', from: '#7a1f12', to: '#2b0d08' } },
-]
